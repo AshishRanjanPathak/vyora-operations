@@ -5,16 +5,20 @@ export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    const savedUser = localStorage.getItem('minierp_user');
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('minierp_token'));
   const [isLoading, setIsLoading] = useState(true);
 
   // Validate existing token on initial mount
   useEffect(() => {
     const verifyToken = async () => {
-      const storedToken = localStorage.getItem('token');
+      const storedToken = localStorage.getItem('minierp_token');
       if (!storedToken) {
         setIsLoading(false);
         return;
@@ -23,11 +27,11 @@ export const AuthProvider = ({ children }) => {
       try {
         const currentUser = await authService.getMe();
         setUser(currentUser);
-        localStorage.setItem('user', JSON.stringify(currentUser));
+        localStorage.setItem('minierp_user', JSON.stringify(currentUser));
       } catch (err) {
-        console.error('Session expired or invalid token:', err.message);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        console.warn('Session expired or invalid token:', err.message);
+        localStorage.removeItem('minierp_token');
+        localStorage.removeItem('minierp_user');
         setUser(null);
         setToken(null);
       } finally {
@@ -42,8 +46,8 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.login({ email, password });
     const { user: loggedInUser, token: authToken } = data;
 
-    localStorage.setItem('token', authToken);
-    localStorage.setItem('user', JSON.stringify(loggedInUser));
+    localStorage.setItem('minierp_token', authToken);
+    localStorage.setItem('minierp_user', JSON.stringify(loggedInUser));
 
     setToken(authToken);
     setUser(loggedInUser);
@@ -52,8 +56,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('minierp_token');
+    localStorage.removeItem('minierp_user');
     setUser(null);
     setToken(null);
     window.location.href = '/login';
