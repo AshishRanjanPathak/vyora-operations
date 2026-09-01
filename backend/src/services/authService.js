@@ -4,9 +4,19 @@ import env from '../config/env.js';
 import userRepository from '../repositories/userRepository.js';
 import { UnauthorizedError, NotFoundError } from '../errors/AppError.js';
 
-class AuthService {
+export class AuthService {
+  /**
+   * Dependency Inversion Principle (DIP):
+   * AuthService accepts its repository dependency via constructor.
+   * Defaults to the Prisma userRepository, but allows injecting mocks for testing.
+   * @param {typeof userRepository} userRepo
+   */
+  constructor(userRepo = userRepository) {
+    this.userRepo = userRepo;
+  }
+
   async login({ email, password }) {
-    const user = await userRepository.findByEmail(email);
+    const user = await this.userRepo.findByEmail(email);
 
     if (!user) {
       throw new UnauthorizedError('Invalid email or password');
@@ -21,7 +31,7 @@ class AuthService {
       throw new UnauthorizedError('Invalid email or password');
     }
 
-    // Generate JWT token with user id, email and role
+    // Generate JWT token
     const token = jwt.sign(
       {
         userId: user.id,
@@ -42,7 +52,7 @@ class AuthService {
   }
 
   async getMe(userId) {
-    const user = await userRepository.findById(userId);
+    const user = await this.userRepo.findById(userId);
     if (!user) {
       throw new NotFoundError('User profile not found');
     }
@@ -50,4 +60,5 @@ class AuthService {
   }
 }
 
+// Export default instance configured with production repository
 export default new AuthService();
