@@ -42,7 +42,7 @@ export class ProductService {
       isLowStock: product.currentStock <= product.minimumStock,
     }));
 
-    if (lowStock === true) {
+    if (lowStock === true || lowStock === 'true') {
       products = products.filter((p) => p.isLowStock);
     }
 
