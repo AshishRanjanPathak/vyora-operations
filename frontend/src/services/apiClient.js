@@ -1,17 +1,18 @@
 import axios from 'axios';
 
-// Create a configured Axios instance
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request Interceptor: Automatically attach JWT token to all requests
+// Request interceptor to automatically attach JWT Bearer token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('minierp_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,31 +21,22 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle global errors like expired sessions (401)
+// Response interceptor to handle errors globally (e.g. 401 Unauthorized)
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // If backend returns standard envelope { success: true, data: ..., pagination: ... }, unwrap data
+    return response.data;
+  },
   (error) => {
     if (error.response?.status === 401) {
-      // Clear expired credentials
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // If not already on login page, redirect
+      localStorage.removeItem('minierp_token');
+      localStorage.removeItem('minierp_user');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
     }
-
-    const message =
-      error.response?.data?.message ||
-      error.message ||
-      'An unexpected error occurred';
-
-    const customError = new Error(message);
-    customError.status = error.response?.status;
-    customError.errors = error.response?.data?.errors;
-
-    return Promise.reject(customError);
+    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
+    return Promise.reject(new Error(message));
   }
 );
 

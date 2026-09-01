@@ -1,15 +1,19 @@
 {
-  "name": "erp-crm-backend",
+  "name": "minierp-backend",
   "version": "1.0.0",
-  "description": "Mini ERP + CRM Backend API",
+  "description": "Mini ERP + CRM Backend API with Prisma and Neon PostgreSQL",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "build": "npx prisma generate",
+    "postinstall": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",
-    "db:seed": "npx prisma db seed",
-    "db:studio": "npx prisma studio"
+    "db:deploy": "npx prisma migrate deploy",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "npx prisma studio",
+    "test:e2e": "node tests/e2eIntegrationTest.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
