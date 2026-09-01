@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import authRoutes from './authRoutes.js';
 
 const router = Router();
 
+// Health check endpoint
 router.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -10,5 +12,8 @@ router.get('/health', (req, res) => {
     environment: process.env.NODE_ENV,
   });
 });
+
+// Mount feature routes
+router.use('/auth', authRoutes);
 
 export default router;
