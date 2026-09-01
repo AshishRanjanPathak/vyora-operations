@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './authRoutes.js';
+import customerRoutes from './customerRoutes.js';
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.get('/health', (req, res) => {
 
 // Mount feature routes
 router.use('/auth', authRoutes);
+router.use('/customers', customerRoutes);
 
 export default router;
