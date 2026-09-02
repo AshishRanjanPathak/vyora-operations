@@ -270,22 +270,32 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* 3. Operational CTA */}
+      {/* 3. Operational CTA with Official Aceternity CloudShader */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-[#121316] text-white rounded-3xl p-8 sm:p-14 text-center space-y-6 relative overflow-hidden shadow-2xl border border-white/10">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/25 min-h-[22rem] flex items-center justify-center p-8 sm:p-14 text-center">
+          {/* CloudShader in the bottom blue CTA container */}
+          <CloudShader
+            className="absolute inset-0"
+            speed={0.9}
+            count={5}
+            cloudColor="#fbf8f2"
+            skyTopColor="#2563eb"
+            skyBottomColor="#93c5fd"
+          />
+
           <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-            <span className="text-[11px] font-mono text-[#ea580c] font-bold uppercase tracking-widest block">
+            <span className="text-[11px] font-mono text-white font-bold uppercase tracking-widest inline-block px-3 py-1 rounded-full bg-white/25 backdrop-blur-md border border-white/30 shadow-sm">
               GET STARTED IN SECONDS
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold font-display uppercase tracking-tight">
+            <h2 className="text-3xl sm:text-5xl font-extrabold font-display uppercase tracking-tight text-white drop-shadow-lg">
               OPERATIONS, SIMPLIFIED.
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/95 font-sans leading-relaxed drop-shadow-md">
               Access the unified operations platform to begin managing wholesale buyers, real-time inventory, and delivery challans.
             </p>
             <div className="pt-4">
               <Link to="/login">
-                <Button variant="orange" size="lg" icon={ArrowRight} className="font-mono">
+                <Button variant="orange" size="lg" icon={ArrowRight} className="font-mono shadow-2xl">
                   Sign In to Console
                 </Button>
               </Link>
