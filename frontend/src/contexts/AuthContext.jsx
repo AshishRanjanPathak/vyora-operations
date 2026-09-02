@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const data = await authService.login({ email, password });
+    const data = await authService.login(email, password);
     const { user: loggedInUser, token: authToken } = data;
 
     localStorage.setItem('minierp_token', authToken);
@@ -53,6 +53,19 @@ export const AuthProvider = ({ children }) => {
     setUser(loggedInUser);
 
     return loggedInUser;
+  };
+
+  const register = async (formData) => {
+    const data = await authService.register(formData);
+    const { user: registeredUser, token: authToken } = data;
+
+    localStorage.setItem('minierp_token', authToken);
+    localStorage.setItem('minierp_user', JSON.stringify(registeredUser));
+
+    setToken(authToken);
+    setUser(registeredUser);
+
+    return registeredUser;
   };
 
   const logout = () => {
@@ -77,6 +90,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: Boolean(user && token),
         isLoading,
         login,
+        register,
         logout,
         hasRole,
       }}

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { customerService } from '../services/customerService.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDebounce } from '../hooks/useDebounce.js';
+import { exportToCSV } from '../lib/exportUtils.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
@@ -12,7 +13,7 @@ import { Modal } from '../components/ui/Modal.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { TableSkeleton } from '../components/ui/Skeleton.jsx';
-import { Plus, Search, Eye, Trash2, Building, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Building, Phone, Mail, Download } from 'lucide-react';
 
 const STATUS_VARIANTS = {
   LEAD: 'purple',
@@ -42,7 +43,6 @@ export const CustomersPage = () => {
   const [customerType, setCustomerType] = useState('');
   const [page, setPage] = useState(1);
 
-  // Performance: Debounce search input to avoid spamming the API on every keypress
   const debouncedSearch = useDebounce(search, 300);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +101,27 @@ export const CustomersPage = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!customers.length) {
+      toast.error('No customer accounts to export');
+      return;
+    }
+    const exportData = customers.map((c) => ({
+      ID: c.id,
+      BusinessName: c.businessName,
+      ContactPerson: c.name,
+      Mobile: c.mobile,
+      Email: c.email || '',
+      GSTIN: c.gstNumber || '',
+      AccountTier: c.customerType,
+      Status: c.status,
+      Address: c.address || '',
+      CreatedAt: c.createdAt,
+    }));
+    exportToCSV(exportData, `wholesale-customers-${Date.now()}.csv`);
+    toast.success('Customer directory exported to CSV');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -110,9 +131,14 @@ export const CustomersPage = () => {
             Corporate buyers, credit lines, and interaction history dossier.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} variant="orange" size="md" icon={Plus}>
-          New Account
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExportCSV} variant="secondary" size="md" icon={Download}>
+            Export CSV
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)} variant="orange" size="md" icon={Plus}>
+            New Account
+          </Button>
+        </div>
       </div>
 
       {/* Filter Bar */}

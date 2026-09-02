@@ -1,16 +1,10 @@
 import defaultAuthService, { AuthService } from '../services/authService.js';
 
 export class AuthController {
-  /**
-   * Dependency Inversion Principle (DIP):
-   * AuthController accepts authService via constructor.
-   * @param {AuthService} authService
-   */
   constructor(authService = defaultAuthService) {
     this.authService = authService;
   }
 
-  // Use arrow function to preserve 'this' context when Express calls the method
   login = async (req, res, next) => {
     try {
       const { email, password } = req.body;
@@ -20,6 +14,38 @@ export class AuthController {
         success: true,
         message: 'Login successful',
         data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  register = async (req, res, next) => {
+    try {
+      const { name, email, password, role } = req.body;
+      const data = await this.authService.register({ name, email, password, role });
+
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  changePassword = async (req, res, next) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const result = await this.authService.changePassword(req.user.id, {
+        currentPassword,
+        newPassword,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
       });
     } catch (error) {
       next(error);

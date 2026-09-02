@@ -5,13 +5,14 @@ import { challanService } from '../services/challanService.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { formatDate } from '../lib/utils.js';
+import { exportToCSV } from '../lib/exportUtils.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { TableSkeleton } from '../components/ui/Skeleton.jsx';
-import { Plus, Search, FileSpreadsheet, Eye } from 'lucide-react';
+import { Plus, Search, FileSpreadsheet, Eye, Download } from 'lucide-react';
 
 export const ChallansPage = () => {
   const { hasRole } = useAuth();
@@ -23,7 +24,6 @@ export const ChallansPage = () => {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
 
-  // Performance: Debounce search input
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchChallans = useCallback(async () => {
@@ -48,6 +48,24 @@ export const ChallansPage = () => {
     fetchChallans();
   }, [fetchChallans]);
 
+  const handleExportCSV = () => {
+    if (!challans.length) {
+      toast.error('No delivery challans to export');
+      return;
+    }
+    const exportData = challans.map((ch) => ({
+      ChallanNumber: ch.challanNumber,
+      BuyerBusiness: ch.customer?.businessName || ch.customer?.name || '',
+      BuyerMobile: ch.customer?.mobile || '',
+      TotalQuantity: ch.totalQuantity,
+      Status: ch.status,
+      CreatedAt: ch.createdAt,
+      Notes: ch.notes || '',
+    }));
+    exportToCSV(exportData, `delivery-challans-${Date.now()}.csv`);
+    toast.success('Delivery challans exported to CSV');
+  };
+
   const canCreateChallan = hasRole(['ADMIN', 'SALES']);
 
   return (
@@ -59,13 +77,18 @@ export const ChallansPage = () => {
             ACID-settled dispatch orders, price snapshots, and ownership transfer receipts.
           </p>
         </div>
-        {canCreateChallan && (
-          <Link to="/challans/new">
-            <Button variant="orange" size="md" icon={Plus}>
-              Create Sales Challan
-            </Button>
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExportCSV} variant="secondary" size="md" icon={Download}>
+            Export CSV
+          </Button>
+          {canCreateChallan && (
+            <Link to="/challans/new">
+              <Button variant="orange" size="md" icon={Plus}>
+                Create Sales Challan
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-[#e4e4df] shadow-sm">

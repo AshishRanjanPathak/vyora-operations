@@ -2,11 +2,12 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout.jsx';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
-import { DashboardSkeleton, TableSkeleton } from '../components/ui/Skeleton.jsx';
+import { DashboardSkeleton } from '../components/ui/Skeleton.jsx';
 
 // Route-level Code Splitting for Performance
 const LandingPage = lazy(() => import('../pages/LandingPage.jsx').then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import('../pages/LoginPage.jsx').then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('../pages/RegisterPage.jsx').then(m => ({ default: m.RegisterPage })));
 const DashboardPage = lazy(() => import('../pages/DashboardPage.jsx').then(m => ({ default: m.DashboardPage })));
 const CustomersPage = lazy(() => import('../pages/CustomersPage.jsx').then(m => ({ default: m.CustomersPage })));
 const CustomerDetailPage = lazy(() => import('../pages/CustomerDetailPage.jsx').then(m => ({ default: m.CustomerDetailPage })));
@@ -15,6 +16,7 @@ const InventoryPage = lazy(() => import('../pages/InventoryPage.jsx').then(m => 
 const ChallansPage = lazy(() => import('../pages/ChallansPage.jsx').then(m => ({ default: m.ChallansPage })));
 const ChallanNewPage = lazy(() => import('../pages/ChallanNewPage.jsx').then(m => ({ default: m.ChallanNewPage })));
 const ChallanDetailPage = lazy(() => import('../pages/ChallanDetailPage.jsx').then(m => ({ default: m.ChallanDetailPage })));
+const SettingsPage = lazy(() => import('../pages/SettingsPage.jsx').then(m => ({ default: m.SettingsPage })));
 const UnauthorizedPage = lazy(() => import('../pages/UnauthorizedPage.jsx').then(m => ({ default: m.UnauthorizedPage })));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage.jsx').then(m => ({ default: m.NotFoundPage })));
 
@@ -31,6 +33,7 @@ export const AppRouter = () => {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           {/* Protected Dashboard & Operations Routes */}
           <Route element={<ProtectedRoute />}>
@@ -53,6 +56,8 @@ export const AppRouter = () => {
                 <Route path="/challans/new" element={<ChallanNewPage />} />
               </Route>
               <Route path="/challans/:id" element={<ChallanDetailPage />} />
+
+              <Route path="/settings" element={<SettingsPage />} />
 
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
             </Route>

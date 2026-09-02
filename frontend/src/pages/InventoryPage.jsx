@@ -4,6 +4,7 @@ import { stockService } from '../services/stockService.js';
 import { productService } from '../services/productService.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { formatDate } from '../lib/utils.js';
+import { exportToCSV } from '../lib/exportUtils.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
@@ -11,7 +12,7 @@ import { Modal } from '../components/ui/Modal.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { TableSkeleton } from '../components/ui/Skeleton.jsx';
-import { Plus, ArrowDownRight, ArrowUpRight, Boxes } from 'lucide-react';
+import { Plus, ArrowDownRight, ArrowUpRight, Boxes, Download } from 'lucide-react';
 
 export const InventoryPage = () => {
   const { hasRole } = useAuth();
@@ -103,6 +104,25 @@ export const InventoryPage = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!movements.length) {
+      toast.error('No inventory movement records to export');
+      return;
+    }
+    const exportData = movements.map((m) => ({
+      ID: m.id,
+      Timestamp: m.createdAt,
+      VectorType: m.type,
+      SKU: m.product?.sku,
+      ProductName: m.product?.name,
+      QuantityShift: m.type === 'IN' ? `+${m.quantity}` : `-${m.quantity}`,
+      Reason: m.reason || (m.challanId ? 'Delivery Challan Dispatch' : 'Adjustment'),
+      AuthorizedBy: m.user?.name || m.user?.email || 'Operations Desk',
+    }));
+    exportToCSV(exportData, `vault-stock-movements-${Date.now()}.csv`);
+    toast.success('Vault movement ledger exported to CSV');
+  };
+
   const canRecordStock = hasRole(['ADMIN', 'WAREHOUSE']);
 
   return (
@@ -114,11 +134,16 @@ export const InventoryPage = () => {
             Physical arrivals, dispatch fulfillment deductions, and manual reconciliation logs.
           </p>
         </div>
-        {canRecordStock && (
-          <Button onClick={() => setIsModalOpen(true)} variant="orange" size="md" icon={Plus}>
-            Record Stock Inflow
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExportCSV} variant="secondary" size="md" icon={Download}>
+            Export CSV
           </Button>
-        )}
+          {canRecordStock && (
+            <Button onClick={() => setIsModalOpen(true)} variant="orange" size="md" icon={Plus}>
+              Record Stock Inflow
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter Bar */}

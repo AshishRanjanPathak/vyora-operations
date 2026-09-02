@@ -8,11 +8,7 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   LogOut,
-  Shield,
-  Layers,
-  ChevronRight,
-  Database,
-  CheckCircle2,
+  Settings,
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
@@ -30,6 +26,7 @@ export const DashboardLayout = () => {
     { to: '/products', label: 'Product Catalog', icon: Package },
     { to: '/inventory', label: 'Vault Inventory', icon: Boxes },
     { to: '/challans', label: 'Delivery Challans', icon: FileSpreadsheet },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const roleColors = {
@@ -83,13 +80,17 @@ export const DashboardLayout = () => {
           <div className="flex items-center gap-3">
             {/* User Clearance Pill */}
             {user && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#f4f4f0] border border-[#e4e4df] text-xs">
+              <Link
+                to="/settings"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#f4f4f0] hover:bg-[#ebebe5] border border-[#e4e4df] text-xs transition-colors"
+                title="Workspace Settings"
+              >
                 <div className="w-2 h-2 rounded-full bg-[#ea580c]" />
                 <span className="font-mono text-slate-700 font-medium">{user.name || user.email}</span>
                 <span className={`px-1.5 py-0.2 text-[10px] font-mono font-bold rounded border uppercase ${roleColors[user.role] || 'bg-slate-100 text-slate-700'}`}>
                   {user.role}
                 </span>
-              </div>
+              </Link>
             )}
 
             <button
@@ -116,7 +117,7 @@ export const DashboardLayout = () => {
             <span className="w-2 h-2 rounded-full bg-emerald-600" />
             <span className="font-bold text-[#121316]">VYORA CORE ACTIVE</span>
             <span className="text-slate-300">|</span>
-            <span>Neon PostgreSQL 16 ACID Transactions Verified</span>
+            <span>PostgreSQL 16 ACID Transactions Verified</span>
           </div>
           <div className="text-[11px] text-slate-500">
             Immutable Historical Price Snapshots Enforced

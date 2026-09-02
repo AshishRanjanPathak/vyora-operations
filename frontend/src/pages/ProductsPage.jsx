@@ -5,6 +5,7 @@ import { productService } from '../services/productService.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { formatCurrency } from '../lib/utils.js';
+import { exportToCSV } from '../lib/exportUtils.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
@@ -13,7 +14,7 @@ import { Modal } from '../components/ui/Modal.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { TableSkeleton } from '../components/ui/Skeleton.jsx';
-import { Plus, Search, AlertTriangle, Package, Trash2, Edit } from 'lucide-react';
+import { Plus, Search, AlertTriangle, Package, Trash2, Edit, Download } from 'lucide-react';
 
 const CATEGORIES_LIST = ['All', 'Electronics', 'Mobile', 'Audio'];
 
@@ -39,7 +40,6 @@ export const ProductsPage = () => {
   const [lowStockOnly, setLowStockOnly] = useState(searchParams.get('lowStock') === 'true');
   const [page, setPage] = useState(1);
 
-  // Performance: Debounce live search
   const debouncedSearch = useDebounce(search, 300);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,6 +121,25 @@ export const ProductsPage = () => {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!products.length) {
+      toast.error('No products to export');
+      return;
+    }
+    const exportData = products.map((p) => ({
+      SKU: p.sku,
+      Name: p.name,
+      Category: p.category,
+      UnitPriceINR: p.unitPrice,
+      CurrentStock: p.currentStock,
+      MinimumStock: p.minimumStock,
+      WarehouseBin: p.warehouseLocation || '',
+      IsLowStock: p.currentStock <= p.minimumStock ? 'YES' : 'NO',
+    }));
+    exportToCSV(exportData, `master-sku-catalog-${Date.now()}.csv`);
+    toast.success('Master SKU catalog exported to CSV');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -130,11 +149,16 @@ export const ProductsPage = () => {
             SKU pricing, warehouse locations, and automated safety stock alert boundaries.
           </p>
         </div>
-        {hasRole(['ADMIN']) && (
-          <Button onClick={() => handleOpenModal()} variant="orange" size="md" icon={Plus}>
-            New Catalog SKU
+        <div className="flex items-center gap-2">
+          <Button onClick={handleExportCSV} variant="secondary" size="md" icon={Download}>
+            Export CSV
           </Button>
-        )}
+          {hasRole(['ADMIN']) && (
+            <Button onClick={() => handleOpenModal()} variant="orange" size="md" icon={Plus}>
+              New Catalog SKU
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter Toolbar */}
