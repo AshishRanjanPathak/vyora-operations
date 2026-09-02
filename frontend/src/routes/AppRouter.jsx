@@ -1,54 +1,66 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout.jsx';
 import { ProtectedRoute } from './ProtectedRoute.jsx';
+import { DashboardSkeleton, TableSkeleton } from '../components/ui/Skeleton.jsx';
 
-import { LoginPage } from '../pages/LoginPage.jsx';
-import { DashboardPage } from '../pages/DashboardPage.jsx';
-import { CustomersPage } from '../pages/CustomersPage.jsx';
-import { CustomerDetailPage } from '../pages/CustomerDetailPage.jsx';
-import { ProductsPage } from '../pages/ProductsPage.jsx';
-import { InventoryPage } from '../pages/InventoryPage.jsx';
-import { ChallansPage } from '../pages/ChallansPage.jsx';
-import { ChallanNewPage } from '../pages/ChallanNewPage.jsx';
-import { ChallanDetailPage } from '../pages/ChallanDetailPage.jsx';
-import { UnauthorizedPage } from '../pages/UnauthorizedPage.jsx';
-import { NotFoundPage } from '../pages/NotFoundPage.jsx';
+// Route-level Code Splitting for Performance
+const LandingPage = lazy(() => import('../pages/LandingPage.jsx').then(m => ({ default: m.LandingPage })));
+const LoginPage = lazy(() => import('../pages/LoginPage.jsx').then(m => ({ default: m.LoginPage })));
+const DashboardPage = lazy(() => import('../pages/DashboardPage.jsx').then(m => ({ default: m.DashboardPage })));
+const CustomersPage = lazy(() => import('../pages/CustomersPage.jsx').then(m => ({ default: m.CustomersPage })));
+const CustomerDetailPage = lazy(() => import('../pages/CustomerDetailPage.jsx').then(m => ({ default: m.CustomerDetailPage })));
+const ProductsPage = lazy(() => import('../pages/ProductsPage.jsx').then(m => ({ default: m.ProductsPage })));
+const InventoryPage = lazy(() => import('../pages/InventoryPage.jsx').then(m => ({ default: m.InventoryPage })));
+const ChallansPage = lazy(() => import('../pages/ChallansPage.jsx').then(m => ({ default: m.ChallansPage })));
+const ChallanNewPage = lazy(() => import('../pages/ChallanNewPage.jsx').then(m => ({ default: m.ChallanNewPage })));
+const ChallanDetailPage = lazy(() => import('../pages/ChallanDetailPage.jsx').then(m => ({ default: m.ChallanDetailPage })));
+const UnauthorizedPage = lazy(() => import('../pages/UnauthorizedPage.jsx').then(m => ({ default: m.UnauthorizedPage })));
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage.jsx').then(m => ({ default: m.NotFoundPage })));
 
 export const AppRouter = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
+      <Suspense fallback={<div className="p-8 max-w-7xl mx-auto"><DashboardSkeleton /></div>}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Protected Dashboard & Operations Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
 
-            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SALES']} />}>
-              <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/customers/:id" element={<CustomerDetailPage />} />
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SALES']} />}>
+                <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/customers/:id" element={<CustomerDetailPage />} />
+              </Route>
+
+              <Route path="/products" element={<ProductsPage />} />
+
+              {/* Inventory Routes */}
+              <Route path="/inventory" element={<InventoryPage />} />
+              <Route path="/stock" element={<Navigate to="/inventory" replace />} />
+
+              <Route path="/challans" element={<ChallansPage />} />
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SALES']} />}>
+                <Route path="/challans/new" element={<ChallanNewPage />} />
+              </Route>
+              <Route path="/challans/:id" element={<ChallanDetailPage />} />
+
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
             </Route>
-
-            <Route path="/products" element={<ProductsPage />} />
-
-            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'WAREHOUSE']} />}>
-              <Route path="/stock" element={<InventoryPage />} />
-            </Route>
-
-            <Route path="/challans" element={<ChallansPage />} />
-            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SALES']} />}>
-              <Route path="/challans/new" element={<ChallanNewPage />} />
-            </Route>
-            <Route path="/challans/:id" element={<ChallanDetailPage />} />
-
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Route>
-        </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

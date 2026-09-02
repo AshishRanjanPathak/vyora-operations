@@ -1,161 +1,128 @@
-import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import {
-  LayoutDashboard,
   Users,
   Package,
   Boxes,
   FileSpreadsheet,
+  LayoutDashboard,
   LogOut,
-  Menu,
-  X,
-  Layers,
   Shield,
-  User as UserIcon,
+  Layers,
+  ChevronRight,
+  Database,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
-  const { user, logout, hasRole } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS'] },
-    { name: 'Customers & CRM', href: '/customers', icon: Users, roles: ['ADMIN', 'SALES'] },
-    { name: 'Products Catalog', href: '/products', icon: Package, roles: ['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS'] },
-    { name: 'Inventory & Stock', href: '/stock', icon: Boxes, roles: ['ADMIN', 'WAREHOUSE'] },
-    { name: 'Sales Challans', href: '/challans', icon: FileSpreadsheet, roles: ['ADMIN', 'SALES', 'WAREHOUSE', 'ACCOUNTS'] },
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const navItems = [
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
+    { to: '/customers', label: 'Customers & CRM', icon: Users },
+    { to: '/products', label: 'Product Catalog', icon: Package },
+    { to: '/inventory', label: 'Vault Inventory', icon: Boxes },
+    { to: '/challans', label: 'Delivery Challans', icon: FileSpreadsheet },
   ];
 
-  // Filter navigation items based on current user role
-  const visibleNav = navigation.filter((item) => hasRole(item.roles));
-
   const roleColors = {
-    ADMIN: 'bg-purple-50 text-purple-700 border-purple-200',
-    SALES: 'bg-blue-50 text-blue-700 border-blue-200',
-    WAREHOUSE: 'bg-amber-50 text-amber-700 border-amber-200',
-    ACCOUNTS: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    ADMIN: 'bg-purple-100 text-purple-800 border-purple-200',
+    SALES: 'bg-blue-100 text-blue-800 border-blue-200',
+    WAREHOUSE: 'bg-amber-100 text-amber-800 border-amber-200',
+    ACCOUNTS: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold">
-            <Layers className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-white tracking-wide">Mini ERP + CRM</h1>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Operations Portal</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
-          {visibleNav.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-colors ${
-                  isActive
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {item.name}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* User profile footer */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs uppercase shrink-0">
-                {user?.name ? user.name.substring(0, 2) : <UserIcon className="w-4 h-4" />}
+    <div className="min-h-screen bg-[#fbfbfa] text-[#121316] flex flex-col font-sans selection:bg-[#ea580c] selection:text-white">
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-30 bg-white border-b border-[#e4e4df]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link to="/dashboard" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded bg-[#121316] flex items-center justify-center text-white font-mono font-bold text-sm shadow-sm">
+                V
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{user?.name}</p>
-                <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded border ${roleColors[user?.role] || 'bg-slate-800 text-slate-300'}`}>
-                  {user?.role}
+              <div>
+                <span className="font-extrabold text-[#121316] text-base tracking-tight font-display uppercase">VYORA</span>
+                <span className="text-[10px] text-[#ea580c] font-mono font-bold block -mt-1 tracking-widest">OPERATIONS</span>
+              </div>
+            </Link>
+
+            {/* Global Navigation */}
+            <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.exact}
+                    className={({ isActive }) =>
+                      `flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors btn-press ${
+                        isActive
+                          ? 'bg-[#121316] text-white shadow-sm'
+                          : 'text-slate-600 hover:text-[#121316] hover:bg-[#f4f4f0]'
+                      }`
+                    }
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* User Clearance Pill */}
+            {user && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#f4f4f0] border border-[#e4e4df] text-xs">
+                <div className="w-2 h-2 rounded-full bg-[#ea580c]" />
+                <span className="font-mono text-slate-700 font-medium">{user.name || user.email}</span>
+                <span className={`px-1.5 py-0.2 text-[10px] font-mono font-bold rounded border uppercase ${roleColors[user.role] || 'bg-slate-100 text-slate-700'}`}>
+                  {user.role}
                 </span>
               </div>
-            </div>
+            )}
+
             <button
-              onClick={logout}
-              title="Sign out"
-              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              onClick={handleLogout}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 transition-colors flex items-center gap-1.5 border border-transparent hover:border-red-200 btn-press"
+              title="Sign Out"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-            >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 hidden sm:inline">
-              Wholesale & Distribution Portal
-            </span>
+      {/* Main App Content Surface */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Outlet />
+      </main>
+
+      {/* Global Status Bar Footer */}
+      <footer className="border-t border-[#e4e4df] bg-white py-3 px-6 text-xs text-slate-500 font-mono">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            <span className="font-bold text-[#121316]">VYORA CORE ACTIVE</span>
+            <span className="text-slate-300">|</span>
+            <span>Neon PostgreSQL 16 ACID Transactions Verified</span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">{user?.name}</p>
-              <p className="text-[11px] text-slate-400">{user?.email}</p>
-            </div>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${roleColors[user?.role] || 'bg-slate-100 text-slate-700'}`}>
-              {user?.role}
-            </span>
+          <div className="text-[11px] text-slate-500">
+            Immutable Historical Price Snapshots Enforced
           </div>
-        </header>
-
-        {/* Mobile Navigation Drawer */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-4 space-y-1">
-            {visibleNav.map((item) => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl ${
-                    isActive ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:bg-slate-800'
-                  }`
-                }
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </NavLink>
-            ))}
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-400 hover:bg-slate-800 rounded-xl mt-2"
-            >
-              <LogOut className="w-5 h-5" />
-              Sign out
-            </button>
-          </div>
-        )}
-
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl w-full mx-auto">
-          <Outlet />
-        </main>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 };

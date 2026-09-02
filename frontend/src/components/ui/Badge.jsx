@@ -1,22 +1,21 @@
 import React from 'react';
 
-export const Badge = ({ children, variant = 'slate', size = 'sm', className = '' }) => {
+export const Badge = ({ children, variant = 'slate', className = '' }) => {
   const variants = {
-    slate: 'bg-slate-100 text-slate-700 border-slate-200',
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    amber: 'bg-amber-50 text-amber-700 border-amber-200',
-    rose: 'bg-rose-50 text-rose-700 border-rose-200',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
-    purple: 'bg-purple-50 text-purple-700 border-purple-200',
-  };
-
-  const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs font-semibold',
+    emerald: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    blue: 'bg-blue-50 text-blue-800 border-blue-300',
+    purple: 'bg-purple-50 text-purple-800 border-purple-300',
+    amber: 'bg-amber-50 text-amber-800 border-amber-300',
+    rose: 'bg-rose-50 text-rose-800 border-rose-300',
+    slate: 'bg-slate-100 text-slate-800 border-slate-300',
+    orange: 'bg-orange-50 text-orange-800 border-orange-300',
   };
 
   return (
-    <span className={`inline-flex items-center font-medium rounded-full border ${variants[variant] || variants.slate} ${sizes[size]} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase tracking-wider border ${variants[variant] || variants.slate} ${className}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" aria-hidden="true" />
       {children}
     </span>
   );

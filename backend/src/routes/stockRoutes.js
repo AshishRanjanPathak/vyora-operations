@@ -10,18 +10,20 @@ import {
 
 const router = Router();
 
-// All stock movement routes require authentication and are restricted to ADMIN and WAREHOUSE
+// All stock movement routes require authentication
 router.use(authenticate);
-router.use(authorize(['ADMIN', 'WAREHOUSE']));
 
+// View movement ledger is available to all authenticated internal staff (Admin, Warehouse, Accounts, Sales)
 router.get(
   '/movements',
   validate(stockMovementQuerySchema, 'query'),
   stockController.getMovements
 );
 
+// Recording manual movements is restricted to ADMIN and WAREHOUSE
 router.post(
   '/movements',
+  authorize(['ADMIN', 'WAREHOUSE']),
   validate(createStockMovementSchema, 'body'),
   stockController.recordMovement
 );

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { productService } from '../services/productService.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { useDebounce } from '../hooks/useDebounce.js';
+import { formatCurrency } from '../lib/utils.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
@@ -9,12 +12,24 @@ import { Badge } from '../components/ui/Badge.jsx';
 import { Modal } from '../components/ui/Modal.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
-import { Spinner } from '../components/ui/Spinner.jsx';
+import { TableSkeleton } from '../components/ui/Skeleton.jsx';
 import { Plus, Search, AlertTriangle, Package, Trash2, Edit } from 'lucide-react';
 
+const CATEGORIES_LIST = ['All', 'Electronics', 'Mobile', 'Audio'];
+
+const INITIAL_FORM_STATE = {
+  name: '',
+  sku: '',
+  category: 'Electronics',
+  unitPrice: '',
+  currentStock: 0,
+  minimumStock: 5,
+  warehouseLocation: '',
+};
+
 export const ProductsPage = () => {
-  const { user, hasRole } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { hasRole } = useAuth();
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,46 +39,39 @@ export const ProductsPage = () => {
   const [lowStockOnly, setLowStockOnly] = useState(searchParams.get('lowStock') === 'true');
   const [page, setPage] = useState(1);
 
+  // Performance: Debounce live search
+  const debouncedSearch = useDebounce(search, 300);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    category: '',
-    unitPrice: '',
-    currentStock: 0,
-    minimumStock: 5,
-    warehouseLocation: '',
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await productService.getProducts({
         page,
         limit: 10,
-        search: search || undefined,
-        category: category || undefined,
+        search: debouncedSearch || undefined,
+        category: category && category !== 'All' ? category : undefined,
         lowStock: lowStockOnly ? 'true' : undefined,
       });
-      setProducts(res.data);
+      setProducts(res.data || []);
       setPagination(res.pagination);
     } catch (err) {
-      console.error(err);
+      toast.error(err.message || 'Failed to fetch catalog products');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, debouncedSearch, category, lowStockOnly]);
 
   useEffect(() => {
     fetchProducts();
-  }, [page, search, category, lowStockOnly]);
+  }, [fetchProducts]);
 
   const handleOpenModal = (prod = null) => {
     setEditingProduct(prod);
-    setFormError('');
     if (prod) {
       setFormData({
         name: prod.name,
@@ -75,256 +83,248 @@ export const ProductsPage = () => {
         warehouseLocation: prod.warehouseLocation || '',
       });
     } else {
-      setFormData({
-        name: '',
-        sku: '',
-        category: 'Electronics',
-        unitPrice: '',
-        currentStock: 0,
-        minimumStock: 5,
-        warehouseLocation: '',
-      });
+      setFormData(INITIAL_FORM_STATE);
     }
     setIsModalOpen(true);
   };
 
   const handleSaveProduct = async (e) => {
     e.preventDefault();
-    setFormError('');
     setIsSubmitting(true);
 
     try {
       if (editingProduct) {
         await productService.updateProduct(editingProduct.id, formData);
+        toast.success(`SKU "${formData.sku}" updated successfully!`);
       } else {
         await productService.createProduct(formData);
+        toast.success(`Product SKU "${formData.sku}" cataloged!`);
       }
       setIsModalOpen(false);
       fetchProducts();
     } catch (err) {
-      setFormError(err.message || 'Failed to save product');
+      toast.error(err.message || 'Failed to save product SKU');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+  const handleDeleteProduct = async (id, name) => {
+    if (window.confirm(`Permanently remove ${name} from inventory catalog?`)) {
       try {
         await productService.deleteProduct(id);
+        toast.success(`SKU "${name}" archived from catalog`);
         fetchProducts();
       } catch (err) {
-        alert(err.message || 'Failed to delete product');
+        toast.error(err.message || 'Deletion denied');
       }
     }
   };
-
-  const canManageProducts = hasRole(['ADMIN', 'WAREHOUSE']);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Products Catalog</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage product items, SKU codes, prices, and warehouse reorder alert levels.
+          <h1 className="text-2xl font-bold text-[#121316] font-display tracking-tight uppercase">Master Product Catalog</h1>
+          <p className="text-xs text-slate-500 mt-1 font-mono">
+            SKU pricing, warehouse locations, and automated safety stock alert boundaries.
           </p>
         </div>
-        {canManageProducts && (
-          <Button onClick={() => handleOpenModal()} variant="primary" icon={Plus}>
-            New Product
+        {hasRole(['ADMIN']) && (
+          <Button onClick={() => handleOpenModal()} variant="orange" size="md" icon={Plus}>
+            New Catalog SKU
           </Button>
         )}
       </div>
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Filter Toolbar */}
+      <div className="bg-white p-4 rounded-xl border border-[#e4e4df] shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
-              placeholder="Search by SKU, name, category..."
+              placeholder="Search SKU code, product name, warehouse aisle..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-10 pr-3.5 py-2 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] font-medium"
             />
           </div>
 
-          <Input
-            placeholder="Filter category (e.g. Mobile, Audio)"
+          <select
             value={category}
             onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-          />
+            className="w-full px-3 py-2 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] font-medium focus-visible:ring-2 focus-visible:ring-[#ea580c]"
+          >
+            <option value="">All Categories</option>
+            {CATEGORIES_LIST.filter(c => c !== 'All').map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
 
-          <div className="flex items-center">
-            <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={lowStockOnly}
-                onChange={(e) => {
-                  setLowStockOnly(e.target.checked);
-                  setPage(1);
-                }}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-              />
-              <span className="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
-                <AlertTriangle className="w-4 h-4" /> Low Stock Alerts Only
-              </span>
-            </label>
-          </div>
+          <button
+            onClick={() => { setLowStockOnly(!lowStockOnly); setPage(1); }}
+            className={`w-full px-3.5 py-2 text-xs font-bold font-mono rounded-lg border flex items-center justify-center gap-2 transition-all btn-press ${
+              lowStockOnly
+                ? 'bg-rose-50 border-rose-300 text-rose-800'
+                : 'bg-white border-[#dcdcd5] text-slate-700 hover:border-[#121316]'
+            }`}
+          >
+            <AlertTriangle className={`w-3.5 h-3.5 ${lowStockOnly ? 'text-rose-600' : 'text-slate-400'}`} />
+            <span>Low Stock Alert Filter</span>
+          </button>
         </div>
-      </Card>
+      </div>
 
       {isLoading ? (
-        <div className="py-16 flex justify-center">
-          <Spinner size="lg" />
-        </div>
+        <TableSkeleton rows={8} cols={7} />
       ) : products.length === 0 ? (
         <Card className="text-center py-12">
-          <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-slate-800">No products found</h3>
-          <p className="text-sm text-slate-500 mt-1">Try adjusting your filters or add a new product item.</p>
+          <Package className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-[#121316]">No product items found</h3>
+          <p className="text-xs text-slate-500 mt-1">Adjust search parameters or add a new SKU item to the catalog.</p>
         </Card>
       ) : (
-        <div>
-          <Table headers={['Product & SKU', 'Category', 'Unit Price', 'Stock Level', 'Location', 'Actions']}>
-            {products.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-50/50">
-                <td className="py-3.5 px-4">
-                  <p className="font-bold text-slate-900">{p.name}</p>
-                  <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {p.sku}
-                  </span>
-                </td>
-                <td className="py-3.5 px-4 text-slate-600">{p.category}</td>
-                <td className="py-3.5 px-4 font-bold text-slate-900">
-                  ₹{Number(p.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </td>
-                <td className="py-3.5 px-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-slate-900">{p.currentStock}</span>
-                    {p.isLowStock ? (
-                      <Badge variant="amber" className="flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Low (Min: {p.minimumStock})
-                      </Badge>
-                    ) : (
-                      <Badge variant="emerald">Healthy</Badge>
+        <div className="space-y-4">
+          <Table headers={['SKU & Item Name', 'Category', 'Unit Spot Valuation', 'Physical Stock', 'Alert Min', 'Warehouse Bin', 'Actions']}>
+            {products.map((p) => {
+              const isLow = p.currentStock <= p.minimumStock;
+              return (
+                <tr key={p.id} className="hover:bg-[#fafaf8] transition-colors">
+                  <td className="py-3 px-4 first:pl-6">
+                    <span className="font-mono font-bold text-[#ea580c] text-xs block">{p.sku}</span>
+                    <span className="font-bold text-[#121316] text-xs block">{p.name}</span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <Badge variant="purple">{p.category}</Badge>
+                  </td>
+                  <td className="py-3 px-4 font-mono font-bold text-[#121316] text-xs tabular-nums">
+                    {formatCurrency(p.unitPrice)}
+                  </td>
+                  <td className="py-3 px-4 font-mono text-xs">
+                    <span className={`font-bold tabular-nums ${isLow ? 'text-rose-600 font-extrabold' : 'text-emerald-700'}`}>
+                      {p.currentStock} units
+                    </span>
+                    {isLow && (
+                      <span className="block text-[10px] font-mono text-rose-600 font-bold uppercase">Restock Req</span>
                     )}
-                  </div>
-                </td>
-                <td className="py-3.5 px-4 text-xs text-slate-500">{p.warehouseLocation || '—'}</td>
-                <td className="py-3.5 px-4">
-                  <div className="flex items-center gap-2">
-                    {canManageProducts && (
-                      <button
-                        onClick={() => handleOpenModal(p)}
-                        className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                        title="Edit product"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    )}
-                    {user?.role === 'ADMIN' && (
-                      <button
-                        onClick={() => handleDelete(p.id, p.name)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete product"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="py-3 px-4 font-mono text-xs text-slate-500 tabular-nums">
+                    {p.minimumStock} min
+                  </td>
+                  <td className="py-3 px-4 text-xs font-mono text-slate-700 font-medium">{p.warehouseLocation || '-'}</td>
+                  <td className="py-3 px-4 last:pr-6">
+                    <div className="flex items-center gap-1.5">
+                      {hasRole(['ADMIN', 'WAREHOUSE']) && (
+                        <button
+                          onClick={() => handleOpenModal(p)}
+                          className="p-1.5 text-slate-600 hover:text-[#121316] hover:bg-[#f0f0eb] rounded-lg btn-press"
+                          title="Edit SKU properties"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {hasRole(['ADMIN']) && (
+                        <button
+                          onClick={() => handleDeleteProduct(p.id, p.name)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg btn-press"
+                          title="Archive SKU"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </Table>
 
           <Pagination pagination={pagination} onPageChange={setPage} />
         </div>
       )}
 
+      {/* SKU Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? 'Edit Product Item' : 'Create New Catalog Product'}
+        title={editingProduct ? `Edit Catalog SKU: ${editingProduct.sku}` : 'Register Master SKU Item'}
       >
-        {formError && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">
-            {formError}
-          </div>
-        )}
         <form onSubmit={handleSaveProduct} className="space-y-4">
           <Input
-            label="Product Name"
+            label="Product Title"
             name="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="e.g. Samsung 55 Inch 4K Smart TV"
+            placeholder="Enterprise Server Rack PSU 850W"
             required
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="SKU Code"
+              label="SKU Identifier Code"
               name="sku"
               value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              placeholder="e.g. TV-SAM-55"
+              onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+              placeholder="PSU-850-ENT"
               required
             />
             <Input
-              label="Category"
+              label="Product Category"
               name="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="e.g. Electronics, Audio"
+              placeholder="Electronics / Audio / Spares"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Unit Price (₹)"
+              label="Unit Price (INR)"
               name="unitPrice"
               type="number"
               step="0.01"
               value={formData.unitPrice}
               onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-              placeholder="49999.00"
+              placeholder="14500.00"
               required
             />
             <Input
-              label="Current Stock"
+              label="Warehouse Bin / Aisle Code"
+              name="warehouseLocation"
+              value={formData.warehouseLocation}
+              onChange={(e) => setFormData({ ...formData, warehouseLocation: e.target.value })}
+              placeholder="Aisle 4 - Shelf B2"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Physical Stock Level"
               name="currentStock"
               type="number"
               value={formData.currentStock}
-              onChange={(e) => setFormData({ ...formData, currentStock: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, currentStock: parseInt(e.target.value, 10) || 0 })}
               required
+              disabled={!!editingProduct}
             />
             <Input
-              label="Min Alert Stock"
+              label="Minimum Stock Alert Threshold"
               name="minimumStock"
               type="number"
               value={formData.minimumStock}
-              onChange={(e) => setFormData({ ...formData, minimumStock: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, minimumStock: parseInt(e.target.value, 10) || 0 })}
               required
             />
           </div>
 
-          <Input
-            label="Warehouse Location (Shelf / Bin)"
-            name="warehouseLocation"
-            value={formData.warehouseLocation}
-            onChange={(e) => setFormData({ ...formData, warehouseLocation: e.target.value })}
-            placeholder="e.g. Aisle 3, Shelf B2"
-          />
-
-          <div className="pt-2 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#e4e4df]">
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={isSubmitting}>
-              {editingProduct ? 'Update Product' : 'Save Product'}
+            <Button type="submit" variant="orange" isLoading={isSubmitting}>
+              {editingProduct ? 'Update SKU' : 'Catalog SKU'}
             </Button>
           </div>
         </form>

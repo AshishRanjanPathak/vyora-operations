@@ -1,0 +1,41 @@
+# Node & Package Managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment Variables & Secret API Keys (CRITICAL SECURITY)
+.env
+.env.local
+.env.*.local
+*.env
+*.env.production
+*.env.development
+
+# Build Output
+dist/
+build/
+.output/
+
+# Prisma & Database Artifacts
+dev.db
+dev.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Logs & OS System Files
+logs/
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE & Editor Directories
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary Files
+tmp/
+temp/

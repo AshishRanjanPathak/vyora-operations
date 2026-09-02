@@ -74,12 +74,13 @@ export class StockService {
       );
 
       // 5. Create stock movement audit record
+      const safeReason = (reason && reason.trim()) || 'Manual stock adjustment';
       const movement = await this.stockRepo.create(
         {
           productId,
           quantity,
           type,
-          reason: reason.trim(),
+          reason: safeReason,
           createdById: userId,
         },
         tx

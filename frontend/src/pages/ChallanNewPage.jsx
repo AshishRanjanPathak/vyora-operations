@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { customerService } from '../services/customerService.js';
 import { productService } from '../services/productService.js';
 import { challanService } from '../services/challanService.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
-import { ArrowLeft, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Zap, ShieldCheck } from 'lucide-react';
 
 export const ChallanNewPage = () => {
   const navigate = useNavigate();
@@ -19,7 +20,6 @@ export const ChallanNewPage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -35,7 +35,7 @@ export const ChallanNewPage = () => {
           setItems([{ productId: prodRes.data[0].id, quantity: 1 }]);
         }
       } catch (err) {
-        setError('Failed to load customers or products');
+        toast.error('Failed to load accounts or products. Please check network connection.');
       } finally {
         setIsLoading(false);
       }
@@ -69,15 +69,14 @@ export const ChallanNewPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
 
     if (!selectedCustomerId) {
-      setError('Please select a customer account');
+      toast.error('Please select an account to continue.');
       return;
     }
 
     if (items.some((item) => !item.productId || item.quantity < 1)) {
-      setError('Please ensure all line items have valid products and quantities >= 1');
+      toast.error('Please ensure all line items have valid products and quantities >= 1.');
       return;
     }
 
@@ -87,140 +86,166 @@ export const ChallanNewPage = () => {
         customerId: selectedCustomerId,
         items: items.map((i) => ({ productId: i.productId, quantity: parseInt(i.quantity, 10) })),
       });
+      toast.success(`Draft Challan ${challan.challanNumber} generated successfully!`);
       navigate(`/challans/${challan.id}`);
     } catch (err) {
-      setError(err.message || 'Failed to create draft challan');
+      toast.error(err.message || 'Failed to generate draft challan. Please check available reserves.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto overflow-x-hidden">
       <div className="flex items-center gap-3">
-        <Link to="/challans" className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
+        <Link to="/challans" className="p-2 text-slate-500 hover:text-[#121316] hover:bg-[#f0f0eb] rounded-lg btn-press">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Create Sales Delivery Challan</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Create an initial DRAFT order. Warehouse stock will NOT be changed until confirmed.
+          <h1 className="text-xl sm:text-2xl font-bold text-[#121316] font-display tracking-tight uppercase">
+            Issue Sales Delivery Challan
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5 font-mono">
+            Sequential auto-numbering, permanent unit price snapshots, and atomic stock deductions.
           </p>
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-700 text-sm">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card title="1. Select Customer Account">
+        {/* Step 1: Customer Account */}
+        <Card title="1. Consignee / Buyer Account">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Customer / Business Name *
+            <label className="block text-[11px] font-bold text-slate-700 uppercase font-mono tracking-wider mb-2">
+              Select Corporate Entity <span className="text-[#ea580c]">*</span>
             </label>
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-500 font-medium"
+              className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] font-medium focus-visible:ring-2 focus-visible:ring-[#ea580c]"
               required
             >
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.businessName} — {c.name} ({c.mobile}) [{c.customerType}]
+                  {c.businessName} - {c.name} ({c.mobile}) [{c.customerType}]
                 </option>
               ))}
             </select>
           </div>
         </Card>
 
+        {/* Step 2: Line Items */}
         <Card
-          title="2. Line Items (Products & Quantities)"
-          subtitle="Prices and names are snapshotted permanently at creation time"
+          title="2. Dispatch Line Items"
           action={
-            <Button type="button" onClick={handleAddItem} variant="outline" size="sm" icon={Plus}>
-              Add Product Line
+            <Button type="button" onClick={handleAddItem} variant="orange" size="sm" icon={Plus}>
+              Add Line Item
             </Button>
           }
         >
           <div className="space-y-3">
             {items.map((item, index) => {
-              const selectedProduct = products.find((p) => p.id === item.productId);
+              const currentProduct = products.find((p) => p.id === item.productId);
+              const isInsufficient = currentProduct && currentProduct.currentStock < item.quantity;
+              const subtotal = currentProduct ? Number(currentProduct.unitPrice) * (parseInt(item.quantity, 10) || 0) : 0;
+
               return (
-                <div key={index} className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-50/75 rounded-xl border border-slate-200/80">
-                  <div className="flex-1 w-full sm:w-auto">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">Product</label>
-                    <select
-                      value={item.productId}
-                      onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white"
-                      required
-                    >
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} [{p.sku}] — ₹{Number(p.unitPrice).toLocaleString()} (Stock: {p.currentStock})
-                        </option>
-                      ))}
-                    </select>
+                <div
+                  key={index}
+                  className={`p-4 rounded-xl border transition-all ${
+                    isInsufficient ? 'bg-rose-50/50 border-rose-300' : 'bg-[#fafaf8] border-[#e4e4df]'
+                  }`}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div className="sm:col-span-6">
+                      <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase mb-1">
+                        Catalog SKU #{index + 1}
+                      </label>
+                      <select
+                        value={item.productId}
+                        onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] font-medium focus-visible:ring-2 focus-visible:ring-[#ea580c]"
+                        required
+                      >
+                        {products.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} [{p.sku}] - INR {Number(p.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })} (Reserve: {p.currentStock})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase mb-1">
+                        Dispatch Quantity
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                        className={`w-full px-3 py-2 text-xs rounded-lg border font-mono font-bold ${
+                          isInsufficient
+                            ? 'border-rose-400 bg-rose-50 text-rose-900 focus-visible:ring-rose-500'
+                            : 'border-[#dcdcd5] bg-white text-[#121316] focus-visible:ring-[#ea580c]'
+                        }`}
+                        required
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase mb-1">
+                        Subtotal (INR)
+                      </label>
+                      <p className="text-xs font-mono font-bold text-[#121316] tabular-nums py-2">
+                        {subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+
+                    <div className="sm:col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                        disabled={items.length <= 1}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg disabled:opacity-25 btn-press transition-colors"
+                        title="Remove Line Item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="w-full sm:w-32">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">Quantity</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value, 10) || 1)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div className="w-full sm:w-36 text-right sm:text-right">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase mb-1">Line Total</label>
-                    <span className="text-sm font-extrabold text-slate-800 block py-2">
-                      ₹{((selectedProduct ? Number(selectedProduct.unitPrice) : 0) * (item.quantity || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-
-                  <div className="pt-5 sm:pt-4">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(index)}
-                      disabled={items.length <= 1}
-                      className="p-2 text-slate-400 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {isInsufficient && (
+                    <div className="mt-2 text-[11px] text-rose-600 font-mono font-bold flex items-center gap-1">
+                      <span>Insufficient stock reserve (Available: {currentProduct?.currentStock} units). Dispatch will be rejected upon confirmation.</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-100/60 p-4 rounded-xl">
-            <div>
-              <span className="text-xs font-bold text-slate-500 uppercase">Total Items</span>
-              <p className="text-lg font-extrabold text-slate-900">{totalUnits} units across {items.length} lines</p>
+          {/* Totals Summary */}
+          <div className="mt-6 pt-4 border-t border-[#e4e4df] flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
+            <div className="text-xs text-slate-500">
+              Total Units: <span className="font-bold text-[#121316]">{totalUnits} items</span>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-bold text-slate-500 uppercase">Estimated Value (Snapshot)</span>
-              <p className="text-xl font-extrabold text-emerald-700">
-                ₹{estimatedTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
+            <div className="text-sm">
+              <span className="text-slate-500 mr-2">Estimated Valuation:</span>
+              <span className="font-extrabold text-[#121316] text-base">
+                INR {estimatedTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
             </div>
           </div>
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate('/challans')}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" size="lg" isLoading={isSubmitting}>
-            Generate Draft Challan
+          <Link to="/challans">
+            <Button type="button" variant="secondary">
+              Cancel
+            </Button>
+          </Link>
+          <Button type="submit" variant="orange" isLoading={isSubmitting} icon={Zap}>
+            Generate Draft Delivery Challan
           </Button>
         </div>
       </form>

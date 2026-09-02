@@ -6,7 +6,7 @@ export const createStockMovementSchema = z.object({
   type: z.enum(['IN', 'OUT'], {
     errorMap: () => ({ message: 'Movement type must be IN or OUT' }),
   }),
-  reason: z.string().min(3, 'Reason must be at least 3 characters'),
+  reason: z.string().optional().default('Manual stock adjustment'),
 });
 
 export const stockMovementQuerySchema = z.object({

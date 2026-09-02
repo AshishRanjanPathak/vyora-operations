@@ -1,20 +1,24 @@
 import React from 'react';
 
-export const Table = ({ headers, children, className = '' }) => {
+export const Table = ({ headers = [], children, className = '' }) => {
   return (
-    <div className={`overflow-x-auto w-full border border-slate-200/80 rounded-xl bg-white shadow-sm ${className}`}>
-      <table className="w-full text-left border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 bg-slate-50/75 text-xs uppercase font-semibold text-slate-600 tracking-wider">
-            {headers.map((h, i) => (
-              <th key={i} className="py-3.5 px-4 font-semibold">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 text-slate-700">{children}</tbody>
-      </table>
+    <div className={`bg-white rounded-xl overflow-hidden border border-[#e4e4df] shadow-sm ${className}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-[#f4f4f0] text-slate-700 font-bold uppercase tracking-wider border-b border-[#e4e4df] text-[10px] font-mono">
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} className="py-3 px-4 first:pl-6 last:pr-6 whitespace-nowrap">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#e4e4df] text-[#121316] font-medium">
+            {children}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

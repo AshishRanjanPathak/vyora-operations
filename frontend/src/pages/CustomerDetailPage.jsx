@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { customerService } from '../services/customerService.js';
 import { Card } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
-import { Spinner } from '../components/ui/Spinner.jsx';
-import { ArrowLeft, Plus, Phone, Mail, Building, MapPin, Calendar } from 'lucide-react';
+import { DetailPageSkeleton } from '../components/ui/Skeleton.jsx';
+import { ArrowLeft, Plus, Phone, Mail, Building, MapPin, Calendar, ShieldCheck } from 'lucide-react';
 
 export const CustomerDetailPage = () => {
   const { id } = useParams();
@@ -16,14 +17,13 @@ export const CustomerDetailPage = () => {
   const [note, setNote] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [followUpError, setFollowUpError] = useState('');
 
   const fetchCustomer = async () => {
     try {
       const data = await customerService.getCustomerById(id);
       setCustomer(data);
     } catch (err) {
-      setError(err.message || 'Failed to load customer profile');
+      setError(err.message || 'Failed to load account dossier');
     } finally {
       setIsLoading(false);
     }
@@ -37,35 +37,31 @@ export const CustomerDetailPage = () => {
     e.preventDefault();
     if (!note.trim()) return;
     setIsSubmitting(true);
-    setFollowUpError('');
 
     try {
       await customerService.addFollowUp(id, {
         note,
         followUpDate: followUpDate ? new Date(followUpDate).toISOString() : null,
       });
+      toast.success('Account interaction note logged on timeline');
       setNote('');
       setFollowUpDate('');
       fetchCustomer();
     } catch (err) {
-      setFollowUpError(err.message || 'Failed to record follow-up note');
+      toast.error(err.message || 'Failed to record follow-up note');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="py-20 flex justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
+    return <DetailPageSkeleton />;
   }
 
   if (error || !customer) {
     return (
-      <div className="p-6 bg-rose-50 text-rose-700 rounded-xl border border-rose-200">
-        {error || 'Customer not found'}
+      <div className="p-6 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 text-sm">
+        {error || 'Account not found'}
       </div>
     );
   }
@@ -73,149 +69,138 @@ export const CustomerDetailPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Link to="/customers" className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg">
+        <Link to="/customers" className="p-2 text-slate-500 hover:text-[#121316] hover:bg-[#f0f0eb] rounded-lg btn-press">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900">{customer.businessName}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#121316] font-display tracking-tight">{customer.businessName}</h1>
             <Badge variant={customer.status === 'ACTIVE' ? 'emerald' : customer.status === 'LEAD' ? 'purple' : 'slate'}>
               {customer.status}
             </Badge>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">Account ID: {customer.id}</p>
+          <p className="text-xs text-slate-500 mt-0.5 font-mono">Account ID: {customer.id}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-6 lg:col-span-1">
-          <Card title="Customer Information">
-            <div className="space-y-4 text-sm">
+          <Card title="Corporate Dossier">
+            <div className="space-y-4 text-xs">
               <div className="flex items-start gap-3">
-                <Building className="w-4 h-4 text-slate-400 mt-0.5" />
+                <Building className="w-4 h-4 text-[#ea580c] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Contact Person</p>
-                  <p className="font-medium text-slate-800">{customer.name}</p>
+                  <p className="text-[10px] font-mono font-bold text-slate-500 uppercase">Primary Contact</p>
+                  <p className="font-bold text-[#121316] text-sm">{customer.name}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-slate-400 mt-0.5" />
+                <Phone className="w-4 h-4 text-[#ea580c] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Mobile</p>
-                  <p className="font-medium text-slate-800">{customer.mobile}</p>
+                  <p className="text-[10px] font-mono font-bold text-slate-500 uppercase">Direct Mobile</p>
+                  <a href={`tel:${customer.mobile}`} className="font-mono text-[#121316] font-bold hover:underline">
+                    {customer.mobile}
+                  </a>
                 </div>
               </div>
 
               {customer.email && (
                 <div className="flex items-start gap-3">
-                  <Mail className="w-4 h-4 text-slate-400 mt-0.5" />
+                  <Mail className="w-4 h-4 text-[#ea580c] mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Email</p>
-                    <p className="font-medium text-slate-800">{customer.email}</p>
+                    <p className="text-[10px] font-mono font-bold text-slate-500 uppercase">Billing Email</p>
+                    <a href={`mailto:${customer.email}`} className="font-mono text-[#121316] font-bold hover:underline">
+                      {customer.email}
+                    </a>
                   </div>
                 </div>
               )}
 
               {customer.gstNumber && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">GST Number</p>
-                  <p className="font-medium text-slate-800">{customer.gstNumber}</p>
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase">Customer Type</p>
-                <Badge variant="blue" className="mt-1">{customer.customerType}</Badge>
-              </div>
-
-              {customer.address && (
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-slate-400 mt-0.5" />
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase">Address</p>
-                    <p className="font-medium text-slate-800">{customer.address}</p>
+                    <p className="text-[10px] font-mono font-bold text-slate-500 uppercase">GSTIN Code</p>
+                    <p className="font-mono font-bold text-[#121316] text-xs bg-[#f4f4f0] px-2 py-0.5 rounded border border-[#e4e4df] w-fit">
+                      {customer.gstNumber}
+                    </p>
                   </div>
                 </div>
               )}
 
-              {customer.notes && (
-                <div className="pt-3 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Internal Notes</p>
-                  <p className="text-xs text-slate-600 mt-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                    {customer.notes}
-                  </p>
+              {customer.address && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-[#ea580c] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-mono font-bold text-slate-500 uppercase">Delivery & Warehouse Address</p>
+                    <p className="text-slate-700 leading-relaxed font-medium mt-0.5">{customer.address}</p>
+                  </div>
                 </div>
               )}
+
+              <div className="pt-3 border-t border-[#e4e4df] flex items-center justify-between font-mono text-[11px]">
+                <span className="text-slate-500 uppercase">Account Tier</span>
+                <Badge variant="blue">{customer.customerType}</Badge>
+              </div>
             </div>
           </Card>
         </div>
 
+        {/* Right 2 Cols: Interaction Log & Follow-Ups */}
         <div className="space-y-6 lg:col-span-2">
-          <Card title="Record Call or Meeting Note">
-            {followUpError && (
-              <div className="mb-4 p-3 bg-rose-50 text-rose-700 text-xs rounded-lg border border-rose-200">
-                {followUpError}
-              </div>
-            )}
+          {/* Add Interaction Log */}
+          <Card title="Record Interaction Log / Follow-Up Note">
             <form onSubmit={handleAddFollowUp} className="space-y-4">
               <div>
                 <textarea
                   rows={3}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Summarize the discussion, agreed pricing, objections, or next steps..."
-                  className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Record commercial discussion, credit terms review, payment receipt confirmation, or delivery notes..."
+                  className="w-full px-3.5 py-2.5 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] font-medium"
                   required
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="w-full sm:w-auto">
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                    Schedule Next Contact
-                  </label>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="text-[11px] font-mono text-slate-500 uppercase font-bold whitespace-nowrap">Next Review:</span>
                   <input
-                    type="datetime-local"
+                    type="date"
                     value={followUpDate}
                     onChange={(e) => setFollowUpDate(e.target.value)}
-                    className="px-3 py-1.5 text-sm rounded-lg border border-slate-300 bg-white"
+                    className="px-2.5 py-1.5 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] font-mono focus-visible:ring-2 focus-visible:ring-[#ea580c]"
                   />
                 </div>
 
-                <Button type="submit" variant="primary" isLoading={isSubmitting} icon={Plus}>
-                  Save Interaction
+                <Button type="submit" variant="orange" size="sm" isLoading={isSubmitting} icon={Plus}>
+                  Log Activity
                 </Button>
               </div>
             </form>
           </Card>
 
-          <Card title="CRM Activity Timeline" subtitle="Chronological history of interactions">
+          {/* Timeline Stream */}
+          <Card title={`Chronological Activity Ledger (${customer.followUps?.length || 0})`}>
             {customer.followUps?.length === 0 ? (
-              <p className="text-sm text-slate-400 py-6 text-center">
-                No interaction notes recorded yet. Add the first note above!
-              </p>
+              <p className="text-xs text-slate-500 text-center py-6">No historical notes recorded for this buyer account.</p>
             ) : (
-              <div className="relative border-l-2 border-slate-100 ml-4 space-y-6 py-2">
+              <div className="space-y-4">
                 {customer.followUps?.map((f) => (
-                  <div key={f.id} className="relative pl-6">
-                    <div className="absolute -left-2 top-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
-                    <div className="bg-slate-50/75 p-4 rounded-xl border border-slate-100">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold text-slate-800">
-                          {f.createdBy?.name || 'Staff Member'}
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(f.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap">{f.note}</p>
-                      {f.followUpDate && (
-                        <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-md w-fit">
-                          <Calendar className="w-3.5 h-3.5" /> Next Action: {new Date(f.followUpDate).toLocaleString()}
-                        </div>
-                      )}
+                  <div key={f.id} className="p-4 rounded-xl bg-[#fafaf8] border border-[#e4e4df] space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="font-bold text-[#121316]">{f.user?.name || f.user?.email || 'Operations Desk'}</span>
+                      <span className="text-slate-500">{new Date(f.createdAt).toLocaleString()}</span>
                     </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">{f.note}</p>
+                    {f.followUpDate && (
+                      <div className="pt-2 border-t border-[#e4e4df] flex items-center gap-1.5 text-[11px] font-mono text-[#ea580c] font-bold">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Scheduled Follow-Up: {new Date(f.followUpDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
