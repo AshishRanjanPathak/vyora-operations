@@ -15,9 +15,9 @@ export const LandingPage = () => {
   const [stockDelta, setStockDelta] = useState(148);
 
   return (
-    <div className="min-h-screen bg-[#0d1527] text-white selection:bg-[#ea580c]/30 selection:text-white relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#fbfbfa] text-[#121316] selection:bg-[#ea580c]/20 selection:text-[#ea580c] relative overflow-hidden font-sans">
       {/* 1. Full-bleed Hero Section with Official Aceternity Cloud Shader */}
-      <div className="relative min-h-[52rem] w-full overflow-hidden">
+      <div className="relative min-h-[52rem] w-full overflow-hidden text-white">
         <CloudShader
           className="absolute inset-0"
           speed={1}
@@ -270,10 +270,9 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* 3. Operational CTA with Official Aceternity CloudShader */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/25 min-h-[22rem] flex items-center justify-center p-8 sm:p-14 text-center">
-          {/* CloudShader in the bottom blue CTA container */}
+      {/* 3. Operational CTA Card (Zero Navy Blue Flanks) */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-[#fbfbfa]">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-[#e4e4df] min-h-[22rem] flex items-center justify-center p-8 sm:p-14 text-center">
           <CloudShader
             className="absolute inset-0"
             speed={0.9}
@@ -283,7 +282,7 @@ export const LandingPage = () => {
             skyBottomColor="#93c5fd"
           />
 
-          <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
+          <div className="relative z-10 space-y-4 max-w-2xl mx-auto text-white">
             <span className="text-[11px] font-mono text-white font-bold uppercase tracking-widest inline-block px-3 py-1 rounded-full bg-white/25 backdrop-blur-md border border-white/30 shadow-sm">
               GET STARTED IN SECONDS
             </span>
