@@ -1,15 +1,29 @@
 import React from 'react';
+import { LoaderIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export const Spinner = ({ size = 'md', className = '' }) => {
-  const sizes = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12',
+export function Spinner({ className, size = 'md', ...props }) {
+  const sizeClasses = {
+    sm: 'w-3.5 h-3.5',
+    md: 'w-5 h-5',
+    lg: 'w-8 h-8',
+    xl: 'w-10 h-10',
   };
 
   return (
-    <div className={`flex justify-center items-center ${className}`}>
-      <div className={`${sizes[size]} border-2 border-slate-200 border-t-emerald-600 rounded-full animate-spin`} />
+    <LoaderIcon
+      role="status"
+      aria-label="Loading"
+      className={cn('animate-spin text-[#121316]', sizeClasses[size] || 'w-4 h-4', className)}
+      {...props}
+    />
+  );
+}
+
+export function SpinnerCustom({ className }) {
+  return (
+    <div className={cn('flex items-center justify-center gap-4', className)}>
+      <Spinner />
     </div>
   );
-};
+}
