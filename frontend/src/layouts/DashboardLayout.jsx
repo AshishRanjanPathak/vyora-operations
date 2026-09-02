@@ -37,9 +37,9 @@ export const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfbfa] text-[#121316] flex flex-col font-sans selection:bg-[#ea580c] selection:text-white">
+    <div className="min-h-screen bg-[#f0f0eb] text-[#121316] flex flex-col font-sans selection:bg-[#ea580c] selection:text-white">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-30 bg-white border-b border-[#e4e4df]">
+      <header className="sticky top-0 z-30 bg-[#fbfbfa]/90 backdrop-blur-md border-b border-[#dfdfd8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link to="/dashboard" className="flex items-center gap-2.5">
@@ -65,7 +65,7 @@ export const DashboardLayout = () => {
                       `flex items-center gap-1.5 px-3 py-2 rounded-md transition-colors btn-press ${
                         isActive
                           ? 'bg-[#121316] text-white shadow-sm'
-                          : 'text-slate-600 hover:text-[#121316] hover:bg-[#f4f4f0]'
+                          : 'text-slate-600 hover:text-[#121316] hover:bg-[#e4e4df]'
                       }`
                     }
                   >
@@ -82,7 +82,7 @@ export const DashboardLayout = () => {
             {user && (
               <Link
                 to="/settings"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#f4f4f0] hover:bg-[#ebebe5] border border-[#e4e4df] text-xs transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white hover:bg-[#ebebe5] border border-[#dcdcd5] text-xs transition-colors shadow-2xs"
                 title="Workspace Settings"
               >
                 <div className="w-2 h-2 rounded-full bg-[#ea580c]" />
@@ -106,12 +106,12 @@ export const DashboardLayout = () => {
       </header>
 
       {/* Main App Content Surface */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
         <Outlet />
       </main>
 
       {/* Global Status Bar Footer */}
-      <footer className="border-t border-[#e4e4df] bg-white py-3 px-6 text-xs text-slate-500 font-mono">
+      <footer className="border-t border-[#dfdfd8] bg-[#fbfbfa] py-3 px-6 text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-600" />

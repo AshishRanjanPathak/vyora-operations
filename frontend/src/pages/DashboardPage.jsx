@@ -114,22 +114,24 @@ export const DashboardPage = () => {
 
   return (
     <div className="relative w-full">
-      {/* 1. Aceternity Dot Background Layer */}
+      {/* 1. Smoky Tactile Dot Grid Layer */}
       <div
         className={cn(
           "pointer-events-none fixed inset-0 z-0",
           "[background-size:20px_20px]",
-          "[background-image:radial-gradient(#d4d4cf_1.15px,transparent_1.15px)]",
-          "dark:[background-image:radial-gradient(#404040_1.15px,transparent_1.15px)]"
+          "[background-image:radial-gradient(#b8b8b0_1.15px,transparent_1.15px)]"
         )}
       />
-      {/* Radial gradient mask for subtle faded vignette look */}
-      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center bg-[#fbfbfa] [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
 
-      {/* 2. Page Content Surfaces */}
+      {/* 2. Soft Smoky Mist Vignette & Ambient Radial Glows */}
+      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center bg-[#f0f0eb]/75 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+      <div className="pointer-events-none fixed top-10 left-1/4 w-[550px] h-[350px] bg-slate-400/10 rounded-full blur-3xl z-0" />
+      <div className="pointer-events-none fixed top-1/2 right-12 w-[500px] h-[400px] bg-stone-400/15 rounded-full blur-3xl z-0" />
+
+      {/* 3. Page Content Surfaces */}
       <div className="relative z-10 space-y-8">
         {/* FEATURED VARIANT: Operations Hero Banner */}
-        <Card variant="featured">
+        <Card variant="featured" className="bg-[#fbfbfa] border-[#dfdfd8] shadow-sm">
           <CardHeader className="p-6 sm:p-8">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div>
@@ -179,7 +181,7 @@ export const DashboardPage = () => {
 
         {/* COMPACT VARIANT: Fast Operational Summary Strips */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card variant="compact" className="flex items-center justify-between bg-white/95 backdrop-blur-sm">
+          <Card variant="compact" className="flex items-center justify-between bg-white border-[#dfdfd8] shadow-2xs">
             <div className="flex items-center gap-2.5">
               <Database className="w-4 h-4 text-[#ea580c]" />
               <div>
@@ -190,7 +192,7 @@ export const DashboardPage = () => {
             <Badge variant="emerald">ACTIVE</Badge>
           </Card>
 
-          <Card variant="compact" className="flex items-center justify-between bg-white/95 backdrop-blur-sm">
+          <Card variant="compact" className="flex items-center justify-between bg-white border-[#dfdfd8] shadow-2xs">
             <div className="flex items-center gap-2.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <div>
@@ -201,7 +203,7 @@ export const DashboardPage = () => {
             <Badge variant="purple">ENFORCED</Badge>
           </Card>
 
-          <Card variant="compact" className="flex items-center justify-between bg-white/95 backdrop-blur-sm">
+          <Card variant="compact" className="flex items-center justify-between bg-white border-[#dfdfd8] shadow-2xs">
             <div className="flex items-center gap-2.5">
               <Activity className="w-4 h-4 text-blue-600" />
               <div>
@@ -217,7 +219,7 @@ export const DashboardPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {kpis.map((kpi, idx) => (
             <Link key={idx} to={kpi.href} className="block group">
-              <Card variant={kpi.variant} className="h-full flex flex-col justify-between bg-white/95 backdrop-blur-sm">
+              <Card variant={kpi.variant} className="h-full flex flex-col justify-between bg-white border-[#dfdfd8] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="p-5 pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-bold">
@@ -245,7 +247,7 @@ export const DashboardPage = () => {
         </div>
 
         {/* DEFAULT VARIANT: Fulfillment Progress & Velocity */}
-        <Card variant="default" className="bg-white/95 backdrop-blur-sm">
+        <Card variant="default" className="bg-white border-[#dfdfd8] shadow-sm">
           <CardHeader className="p-6 pb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -256,14 +258,14 @@ export const DashboardPage = () => {
                   {fulfillmentRate}% Confirmed & Dispatched
                 </CardTitle>
               </div>
-              <span className="text-xs font-mono text-slate-700 bg-[#f4f4f0] px-3 py-1.5 rounded-lg border border-[#e4e4df] w-fit font-bold">
+              <span className="text-xs font-mono text-slate-700 bg-[#f4f4f0] px-3 py-1.5 rounded-lg border border-[#dfdfd8] w-fit font-bold">
                 {stats?.confirmedChallans || 0} Confirmed / {totalChallans} Total Orders
               </span>
             </div>
           </CardHeader>
 
           <CardContent className="p-6 pt-0">
-            <div className="w-full bg-[#f0f0eb] rounded-full h-2.5 overflow-hidden border border-[#e4e4df]">
+            <div className="w-full bg-[#f0f0eb] rounded-full h-2.5 overflow-hidden border border-[#dfdfd8]">
               <div
                 className="bg-[#ea580c] h-full rounded-full transition-all duration-500"
                 style={{ width: `${fulfillmentRate}%` }}
@@ -273,8 +275,8 @@ export const DashboardPage = () => {
         </Card>
 
         {/* DEFAULT VARIANT: Recent Dispatches Ledger */}
-        <Card variant="default" className="bg-white/95 backdrop-blur-sm">
-          <CardHeader className="p-6 border-b border-[#e4e4df] bg-[#fafaf8]">
+        <Card variant="default" className="bg-white border-[#dfdfd8] shadow-sm">
+          <CardHeader className="p-6 border-b border-[#dfdfd8] bg-[#fafaf8]">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-bold text-[#121316] font-display uppercase">
