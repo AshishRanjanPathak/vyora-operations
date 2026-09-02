@@ -24,9 +24,9 @@ app.use(
         frameAncestors: ["'none'"],
       },
     },
-    frameguard: { action: 'deny' }, // Anti-Clickjacking
-    noSniff: true, // Anti-MIME sniffing
-    xssFilter: true, // XSS filter
+    frameguard: { action: 'deny' },
+    noSniff: true,
+    xssFilter: true,
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
@@ -35,7 +35,6 @@ app.use(
   })
 );
 
-// Disable X-Powered-By to prevent framework fingerprinting
 app.disable('x-powered-by');
 
 // 2. Strict CORS Configuration
@@ -49,9 +48,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, automated test suites)
       if (!origin) return callback(null, true);
-      // Allow any official Vercel preview or production deploy
       if (
         origin.endsWith('.vercel.app') ||
         allowedOrigins.includes(origin) ||
@@ -67,10 +64,10 @@ app.use(
   })
 );
 
-// 3. Rate Limiting Protection (Anti-Brute Force & Anti-DoS)
+// 3. Rate Limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 300 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -80,8 +77,8 @@ const apiLimiter = rateLimit({
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 25, // Limit login attempts to 25 per 15 minutes per IP
+  windowMs: 15 * 60 * 1000,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -92,12 +89,13 @@ const authLimiter = rateLimit({
 
 app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
+app.use('/auth/login', authLimiter);
 
-// 4. Request Payload Size Protection (Anti-Memory Exhaustion DoS)
+// 4. Request Payload Size Protection
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
-// 5. Input Sanitization Middleware (XSS & Script Injection Stripping)
+// 5. Input Sanitization Middleware
 const sanitizeInput = (obj) => {
   if (typeof obj === 'string') {
     return obj
@@ -140,12 +138,20 @@ app.get('/', (req, res) => {
     message: 'Mini ERP + CRM Enterprise API Service',
     status: 'ONLINE',
     version: '1.0.0',
-    health: '/api/health',
+    endpoints: {
+      auth: '/api/auth/login',
+      customers: '/api/customers',
+      products: '/api/products',
+      inventory: '/api/stock/movements',
+      challans: '/api/challans',
+      dashboard: '/api/dashboard/stats',
+    },
   });
 });
 
-// 8. Mount API Router
+// 8. Mount Dual Routing (Supports both /api/* and direct /* paths)
 app.use('/api', router);
+app.use('/', router);
 
 // 9. 404 Catch-All Handler
 app.use((req, res) => {
