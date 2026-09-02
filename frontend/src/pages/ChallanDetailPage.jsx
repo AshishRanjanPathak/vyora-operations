@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { challanService } from '../services/challanService.js';
 import { useAuth } from '../hooks/useAuth.js';
+import { generateInvoicePDF } from '../lib/pdfExport.js';
+import { formatCurrency, formatDate } from '../lib/utils.js';
 import { Button } from '../components/ui/Button.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
 import { DetailPageSkeleton } from '../components/ui/Skeleton.jsx';
@@ -11,10 +13,7 @@ import {
   CheckCircle2,
   XCircle,
   Printer,
-  Layers,
-  Phone,
-  Mail,
-  AlertTriangle,
+  Download,
   FileSpreadsheet,
 } from 'lucide-react';
 
@@ -25,6 +24,7 @@ export const ChallanDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const fetchChallan = async () => {
     try {
@@ -68,6 +68,18 @@ export const ChallanDetailPage = () => {
       } finally {
         setIsProcessing(false);
       }
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsExportingPDF(true);
+    try {
+      await generateInvoicePDF('challan-invoice-doc', `tax-invoice-${challan.challanNumber}.pdf`);
+      toast.success(`Official invoice PDF "${challan.challanNumber}.pdf" exported!`);
+    } catch (err) {
+      toast.error('Failed to generate PDF. You can also use the Print button.');
+    } finally {
+      setIsExportingPDF(false);
     }
   };
 
@@ -117,19 +129,31 @@ export const ChallanDetailPage = () => {
                 {challan.status}
               </Badge>
             </div>
-            <p className="text-xs text-slate-500 font-mono">Issued on {new Date(challan.createdAt).toLocaleString()}</p>
+            <p className="text-xs text-slate-500 font-mono">Issued on {formatDate(challan.createdAt, true)}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Direct PDF Export Button (Bonus Requirement) */}
+          <Button
+            onClick={handleDownloadPDF}
+            variant="orange"
+            size="sm"
+            isLoading={isExportingPDF}
+            icon={Download}
+            className="shadow-sm"
+          >
+            Export PDF Invoice
+          </Button>
+
           <Button onClick={handlePrint} variant="secondary" size="sm" icon={Printer}>
-            Print / PDF
+            Print
           </Button>
 
           {challan.status === 'DRAFT' && canConfirmOrCancel && (
             <Button
               onClick={handleConfirm}
-              variant="orange"
+              variant="primary"
               size="sm"
               isLoading={isProcessing}
               icon={CheckCircle2}
@@ -152,8 +176,11 @@ export const ChallanDetailPage = () => {
         </div>
       </div>
 
-      {/* Official Tax Invoice / Delivery Dispatch Document */}
-      <div className="bg-white rounded-xl border border-[#e4e4df] shadow-sm p-6 sm:p-10 space-y-8 print:p-0 print:border-none print:shadow-none">
+      {/* Official Tax Invoice / Delivery Dispatch Document Container */}
+      <div
+        id="challan-invoice-doc"
+        className="bg-white rounded-xl border border-[#e4e4df] shadow-sm p-6 sm:p-10 space-y-8 print:p-0 print:border-none print:shadow-none"
+      >
         {/* Document Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-[#e4e4df] pb-6">
           <div className="flex items-center gap-3">
@@ -168,7 +195,7 @@ export const ChallanDetailPage = () => {
 
           <div className="text-left sm:text-right font-mono text-xs text-slate-600 space-y-1">
             <p className="font-bold text-[#121316]">DOCUMENT #{challan.challanNumber}</p>
-            <p>Issue Date: {new Date(challan.createdAt).toLocaleDateString()}</p>
+            <p>Issue Date: {formatDate(challan.createdAt)}</p>
             <p className="text-[11px] text-emerald-700 font-bold">Status: {challan.status}</p>
           </div>
         </div>
@@ -218,13 +245,13 @@ export const ChallanDetailPage = () => {
                       <span className="text-[10px] text-[#ea580c] font-bold block">{item.product?.sku}</span>
                     </td>
                     <td className="py-3 px-4 text-right text-slate-700 tabular-nums">
-                      INR {Number(item.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {formatCurrency(item.unitPrice)}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-[#121316] tabular-nums">
                       {item.quantity} units
                     </td>
                     <td className="py-3 px-4 last:pr-6 text-right font-extrabold text-[#121316] tabular-nums">
-                      INR {lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {formatCurrency(lineTotal)}
                     </td>
                   </tr>
                 );
@@ -243,7 +270,7 @@ export const ChallanDetailPage = () => {
           <div className="p-4 rounded-xl bg-[#fafaf8] border border-[#e4e4df] text-right space-y-1 w-full sm:w-auto">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold block">Consolidated Valuation</span>
             <p className="text-2xl font-extrabold font-mono text-[#121316] tabular-nums">
-              INR {grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              {formatCurrency(grandTotal)}
             </p>
           </div>
         </div>
