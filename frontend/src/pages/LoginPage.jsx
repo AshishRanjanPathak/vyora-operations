@@ -13,6 +13,7 @@ import {
   Boxes,
   CheckCircle2,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
 
 export const LoginPage = () => {
@@ -180,8 +181,22 @@ export const LoginPage = () => {
             </div>
           </form>
 
+          {/* New Workspace Registration Link */}
+          <div className="p-4 rounded-xl bg-[#fafaf8] border border-[#e4e4df] flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-[#121316] block">Need a new workspace?</span>
+              <span className="text-[11px] text-slate-500 block">Register master company administrator</span>
+            </div>
+            <Link
+              to="/register"
+              className="px-3.5 py-1.5 rounded-lg bg-[#121316] text-white hover:bg-[#252830] text-xs font-mono font-bold transition-all shadow-sm shrink-0 flex items-center gap-1.5"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-[#ea580c]" /> Register
+            </Link>
+          </div>
+
           {/* Quick-Fill Persona Test Buttons */}
-          <div className="space-y-3 pt-6 border-t border-[#e4e4df]">
+          <div className="space-y-3 pt-4 border-t border-[#e4e4df]">
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold block">
               1-Click Persona Sign-In (Demo Credentials):
             </span>
