@@ -2,21 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CloudShader } from '@/components/ui/cloud-shader';
 import { Button } from '@/components/ui/Button.jsx';
-import { Badge } from '@/components/ui/Badge.jsx';
 import {
   Boxes,
-  ShieldCheck,
   FileSpreadsheet,
   Users,
   ArrowRight,
-  TrendingUp,
-  CheckCircle2,
-  Lock,
-  Zap,
   ArrowDownRight,
-  ArrowUpRight,
-  Sparkles,
-  UserPlus,
 } from 'lucide-react';
 
 export const LandingPage = () => {
@@ -67,18 +58,18 @@ export const LandingPage = () => {
             </a>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               to="/login"
-              className="hidden text-sm font-semibold text-white/90 drop-shadow transition hover:text-white sm:block"
+              className="text-sm font-semibold text-white/90 drop-shadow transition hover:text-white"
             >
               Sign in
             </Link>
             <Link
-              to="/register"
-              className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#121316] shadow-lg transition hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5"
+              to="/login"
+              className="rounded-full bg-white px-5 py-2 text-sm font-bold text-[#121316] shadow-lg transition hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <UserPlus className="w-3.5 h-3.5 text-[#ea580c]" /> Create Workspace
+              Launch Console
             </Link>
           </div>
         </nav>
@@ -103,17 +94,17 @@ export const LandingPage = () => {
 
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
             <Link
-              to="/register"
+              to="/login"
               className="rounded-full bg-[#ea580c] px-7 py-3 text-sm font-bold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ea580c]/90 flex items-center gap-2"
             >
-              Create Free Workspace <ArrowRight className="w-4 h-4" />
+              Open Operations Console <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              to="/login"
+            <a
+              href="#preview"
               className="rounded-full border border-white/50 bg-white/15 px-6 py-3 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/25"
             >
-              Launch Demo Console
-            </Link>
+              Explore Live Demo
+            </a>
           </div>
 
           <p className="mt-4 text-xs text-white/80 drop-shadow-sm font-mono">
@@ -292,15 +283,10 @@ export const LandingPage = () => {
             <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed">
               Access the unified operations platform to begin managing wholesale buyers, real-time inventory, and delivery challans.
             </p>
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link to="/register">
-                <Button variant="orange" size="lg" icon={UserPlus} className="font-mono">
-                  Create Enterprise Workspace
-                </Button>
-              </Link>
+            <div className="pt-4">
               <Link to="/login">
-                <Button variant="secondary" size="lg" icon={ArrowRight} className="font-mono bg-white text-[#121316] hover:bg-slate-100">
-                  Sign In with Demo Roles
+                <Button variant="orange" size="lg" icon={ArrowRight} className="font-mono">
+                  Sign In to Console
                 </Button>
               </Link>
             </div>
@@ -314,7 +300,6 @@ export const LandingPage = () => {
           <p>© 2026 VYORA OPERATIONS ERP. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link to="/login" className="hover:text-[#121316]">Console Login</Link>
-            <Link to="/register" className="hover:text-[#121316]">Register Workspace</Link>
             <span className="hover:text-[#121316]">Documentation</span>
             <span className="hover:text-[#121316]">Privacy</span>
           </div>
