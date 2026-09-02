@@ -270,35 +270,37 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* 3. Operational CTA Card (Zero Navy Blue Flanks) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-[#fbfbfa]">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-[#e4e4df] min-h-[22rem] flex items-center justify-center p-8 sm:p-14 text-center">
-          <CloudShader
-            className="absolute inset-0"
-            speed={0.9}
-            count={5}
-            cloudColor="#fbf8f2"
-            skyTopColor="#2563eb"
-            skyBottomColor="#93c5fd"
-          />
+      {/* 3. Full-bleed Operational CTA with CloudShader */}
+      <section className="relative w-full py-28 overflow-hidden text-white border-t border-[#e4e4df]">
+        <CloudShader
+          className="absolute inset-0"
+          speed={0.9}
+          count={6}
+          cloudColor="#fbf8f2"
+          skyTopColor="#2563eb"
+          skyBottomColor="#93c5fd"
+        />
 
-          <div className="relative z-10 space-y-4 max-w-2xl mx-auto text-white">
-            <span className="text-[11px] font-mono text-white font-bold uppercase tracking-widest inline-block px-3 py-1 rounded-full bg-white/25 backdrop-blur-md border border-white/30 shadow-sm">
-              GET STARTED IN SECONDS
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-extrabold font-display uppercase tracking-tight text-white drop-shadow-lg">
-              OPERATIONS, SIMPLIFIED.
-            </h2>
-            <p className="text-xs sm:text-sm text-white/95 font-sans leading-relaxed drop-shadow-md">
-              Access the unified operations platform to begin managing wholesale buyers, real-time inventory, and delivery challans.
-            </p>
-            <div className="pt-4">
-              <Link to="/login">
-                <Button variant="orange" size="lg" icon={ArrowRight} className="font-mono shadow-2xl">
-                  Sign In to Console
-                </Button>
-              </Link>
-            </div>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-mono text-white shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#ea580c] animate-pulse" />
+            <span>GET STARTED IN SECONDS</span>
+          </div>
+
+          <h2 className="text-4xl sm:text-6xl font-extrabold font-display uppercase tracking-tight text-white drop-shadow-lg">
+            OPERATIONS, SIMPLIFIED.
+          </h2>
+
+          <p className="text-sm sm:text-base text-white/95 font-sans max-w-2xl mx-auto leading-relaxed drop-shadow-md">
+            Access the unified operations platform to begin managing wholesale buyers, real-time inventory, and delivery challans.
+          </p>
+
+          <div className="pt-4 flex items-center justify-center">
+            <Link to="/login">
+              <Button variant="orange" size="lg" icon={ArrowRight} className="font-mono shadow-2xl">
+                Sign In to Console
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
