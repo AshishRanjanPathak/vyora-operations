@@ -1,9 +1,10 @@
 services:
   - type: web
-    name: minierp-backend
+    name: vyora-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate
     startCommand: npm start
     envVars:
       - key: NODE_ENV
