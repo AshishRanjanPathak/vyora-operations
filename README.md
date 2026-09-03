@@ -328,6 +328,21 @@ POST   /api/challans/:id/cancel      # Cancel challan (Restore stock)
 
 ## 💻 Local Development Quickstart
 
+### 🐳 1-Command Docker Quickstart (Automated Full-Stack)
+
+Run the entire PostgreSQL database, Express API, and Nginx React frontend in a single command:
+
+```bash
+docker compose up --build
+```
+- **Web App**: `http://localhost:5173` (or `http://localhost:80`)
+- **Backend API**: `http://localhost:5000`
+- **PostgreSQL 16**: `localhost:5432`
+
+---
+
+### 💻 Manual Local Development Quickstart
+
 ### Prerequisites:
 - **Node.js**: v18+ or v20+
 - **Git**
