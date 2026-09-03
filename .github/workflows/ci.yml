@@ -1,0 +1,98 @@
+name: Continuous Integration (CI/CD Pipeline)
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  # ===================================================
+  # Job 1: Backend Automated Verification & E2E Tests
+  # ===================================================
+  backend-ci:
+    name: Backend Test & Database Verification
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword123
+          POSTGRES_DB: minierp_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 🗄️ Generate Prisma Client Engine
+        working-directory: ./backend
+        run: npx prisma generate
+
+      - name: 🚀 Push Database Schema to Test PostgreSQL
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword123@localhost:5432/minierp_test_db?schema=public
+          JWT_SECRET: ci-test-jwt-secret-key-32-chars-long
+        run: npx prisma db push --skip-generate
+
+      - name: 🌱 Seed Test Database
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword123@localhost:5432/minierp_test_db?schema=public
+          JWT_SECRET: ci-test-jwt-secret-key-32-chars-long
+        run: node prisma/seed.js
+
+      - name: 🧪 Execute 10 Full-Stack E2E Integration Test Scenarios
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgrespassword123@localhost:5432/minierp_test_db?schema=public
+          JWT_SECRET: ci-test-jwt-secret-key-32-chars-long
+          PORT: 5000
+          NODE_ENV: test
+        run: node tests/e2eIntegrationTest.js
+
+  # ===================================================
+  # Job 2: Frontend Production Build & Code Integrity
+  # ===================================================
+  frontend-ci:
+    name: Frontend Production Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: ⚡ Build React 18 Production Bundle (Vite)
+        working-directory: ./frontend
+        run: npm run build
