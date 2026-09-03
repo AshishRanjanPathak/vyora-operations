@@ -1,6 +1,10 @@
 # 🏢 Full-Stack Mini ERP + CRM Operations Portal
 
-> **A Production-Grade, Role-Based Enterprise Operations System** built with **JavaScript (Node.js & React)**, **Prisma ORM**, **Neon Serverless PostgreSQL**, **Express.js**, and **Tailwind CSS**, strictly engineered following **SOLID Software Design Principles**.
+> **A Production-Grade, Role-Based Enterprise Operations System** built with **JavaScript (Node.js & React)**, **Prisma ORM**, **Neon Serverless PostgreSQL**, **Express.js**, and **Tailwind CSS**, strictly engineered following **Software Design Principles**.
+
+## 🌐 Live Project
+
+**👉 [VIEW LIVE PROJECT](https://vyora-operations.vercel.app/)**
 
 [![Database: Neon](https://img.shields.io/badge/Database-Neon_PostgreSQL-00E599?style=flat-square&logo=postgresql)](https://neon.tech)
 [![ORM: Prisma](https://img.shields.io/badge/ORM-Prisma_5.22-2D3748?style=flat-square&logo=prisma)](https://prisma.io)
