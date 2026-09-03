@@ -10,7 +10,7 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '@/components/ui/card';
+} from '@/components/ui/Card.jsx';
 import { Badge } from '@/components/ui/Badge.jsx';
 import { Button } from '@/components/ui/Button.jsx';
 import { Table } from '@/components/ui/Table.jsx';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth.js';
 import { authService } from '../services/authService.js';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/card.jsx';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../components/ui/Card.jsx';
 import { Button } from '../components/ui/Button.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { Badge } from '../components/ui/Badge.jsx';
