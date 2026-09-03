@@ -39,3 +39,7 @@ Thumbs.db
 # Temporary Files
 tmp/
 temp/
+
+# Agent and AI metadata
+.agents/
+.agents
