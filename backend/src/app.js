@@ -1,5 +1,6 @@
 import './config/env.js';
 
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -19,14 +20,15 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", 'http://localhost:5000', 'https://*.onrender.com', 'https://*.vercel.app'],
+        imgSrc: ["'self'", 'data:', 'https:', 'http:'],
+        connectSrc: ["'self'", 'http://localhost:5000', 'https://*.onrender.com', 'https://*.vercel.app', 'https://*.amazonaws.com'],
         frameAncestors: ["'none'"],
       },
     },
     frameguard: { action: 'deny' },
     noSniff: true,
     xssFilter: true,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
@@ -56,7 +58,7 @@ app.use(
       ) {
         return callback(null, true);
       }
-      return callback(new Error('CORS policy: Access denied for this origin.'));
+      return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -95,7 +97,10 @@ app.use('/auth/login', authLimiter);
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
-// 5. Input Sanitization Middleware
+// 5. Static uploads directory serving
+app.use('/uploads', express.static(path.resolve('uploads')));
+
+// 6. Input Sanitization Middleware
 const sanitizeInput = (obj) => {
   if (typeof obj === 'string') {
     return obj
@@ -126,12 +131,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// 6. Request Logging
+// 7. Request Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-// 7. Root Health & Welcome Endpoint
+// 8. Root Health & Welcome Endpoint
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
@@ -149,11 +154,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// 8. Mount Dual Routing (Supports both /api/* and direct /* paths)
+// 9. Mount Dual Routing (Supports both /api/* and direct /* paths)
 app.use('/api', router);
 app.use('/', router);
 
-// 9. 404 Catch-All Handler
+// 10. 404 Catch-All Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -161,7 +166,7 @@ app.use((req, res) => {
   });
 });
 
-// 10. Centralized Production Error Handler
+// 11. Centralized Production Error Handler
 app.use(errorHandler);
 
 export default app;

@@ -3,6 +3,7 @@ import productController from '../controllers/productController.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { validate } from '../middleware/validate.js';
+import { uploadProductImageMiddleware } from '../middleware/uploadMiddleware.js';
 import {
   productQuerySchema,
   createProductSchema,
@@ -17,6 +18,14 @@ router.use(authenticate);
 // View catalog is available to all authenticated internal staff
 router.get('/', validate(productQuerySchema, 'query'), productController.getProducts);
 router.get('/:id', productController.getProductById);
+
+// Product image upload (AWS S3 + Local disk fallback)
+router.post(
+  '/upload-image',
+  authorize(['ADMIN', 'WAREHOUSE']),
+  uploadProductImageMiddleware,
+  productController.uploadImage
+);
 
 // Product creation and editing restricted to ADMIN and WAREHOUSE
 router.post(

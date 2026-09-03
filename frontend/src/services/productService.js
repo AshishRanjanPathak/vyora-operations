@@ -10,6 +10,17 @@ export const productService = {
     return res.data;
   },
 
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await apiClient.post('/products/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+
   async createProduct(data) {
     const res = await apiClient.post('/products', data);
     return res.data;

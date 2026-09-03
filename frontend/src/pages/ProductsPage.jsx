@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { productService } from '../services/productService.js';
@@ -14,7 +14,18 @@ import { Modal } from '../components/ui/Modal.jsx';
 import { Table } from '../components/ui/Table.jsx';
 import { Pagination } from '../components/ui/Pagination.jsx';
 import { TableSkeleton } from '../components/ui/Skeleton.jsx';
-import { Plus, Search, AlertTriangle, Package, Trash2, Edit, Download } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  AlertTriangle,
+  Package,
+  Trash2,
+  Edit,
+  Download,
+  UploadCloud,
+  ImageIcon,
+  X,
+} from 'lucide-react';
 
 const CATEGORIES_LIST = ['All', 'Electronics', 'Mobile', 'Audio'];
 
@@ -26,6 +37,7 @@ const INITIAL_FORM_STATE = {
   currentStock: 0,
   minimumStock: 5,
   warehouseLocation: '',
+  imageUrl: '',
 };
 
 export const ProductsPage = () => {
@@ -45,7 +57,9 @@ export const ProductsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const fileInputRef = useRef(null);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -81,11 +95,39 @@ export const ProductsPage = () => {
         currentStock: prod.currentStock,
         minimumStock: prod.minimumStock,
         warehouseLocation: prod.warehouseLocation || '',
+        imageUrl: prod.imageUrl || '',
       });
     } else {
       setFormData(INITIAL_FORM_STATE);
     }
     setIsModalOpen(true);
+  };
+
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (PNG, JPEG, WEBP)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size cannot exceed 5MB');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const uploadRes = await productService.uploadImage(file);
+      const imageUrl = uploadRes.data?.imageUrl;
+      setFormData((prev) => ({ ...prev, imageUrl }));
+      toast.success('Product image uploaded successfully (AWS S3/Vault)!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleSaveProduct = async (e) => {
@@ -122,80 +164,119 @@ export const ProductsPage = () => {
   };
 
   const handleExportCSV = () => {
-    if (!products.length) {
-      toast.error('No products to export');
+    if (!products || products.length === 0) {
+      toast.error('No product data available to export');
       return;
     }
-    const exportData = products.map((p) => ({
-      SKU: p.sku,
-      Name: p.name,
-      Category: p.category,
-      UnitPriceINR: p.unitPrice,
-      CurrentStock: p.currentStock,
-      MinimumStock: p.minimumStock,
-      WarehouseBin: p.warehouseLocation || '',
-      IsLowStock: p.currentStock <= p.minimumStock ? 'YES' : 'NO',
-    }));
-    exportToCSV(exportData, `master-sku-catalog-${Date.now()}.csv`);
-    toast.success('Master SKU catalog exported to CSV');
+
+    const columns = [
+      { header: 'SKU Identifier', key: 'sku' },
+      { header: 'Product Name', key: 'name' },
+      { header: 'Category', key: 'category' },
+      { header: 'Unit Price (INR)', key: 'unitPrice' },
+      { header: 'Physical Stock', key: 'currentStock' },
+      { header: 'Min Stock Threshold', key: 'minimumStock' },
+      { header: 'Warehouse Bin', key: 'warehouseLocation' },
+      { header: 'Image URL', key: 'imageUrl' },
+      { header: 'Audit Date', key: 'createdAt' },
+    ];
+
+    exportToCSV(products, 'products-catalog-export', columns);
+    toast.success('Product catalog CSV exported successfully!');
+  };
+
+  const resolveImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `http://localhost:5000${url}`;
   };
 
   return (
     <div className="space-y-6">
+      {/* Header View */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#121316] font-display tracking-tight uppercase">Master Product Catalog</h1>
-          <p className="text-xs text-slate-500 mt-1 font-mono">
-            SKU pricing, warehouse locations, and automated safety stock alert boundaries.
+          <h1 className="text-xl sm:text-2xl font-bold font-display uppercase tracking-tight text-[#121316]">
+            Master Product Catalog
+          </h1>
+          <p className="text-xs text-slate-500 font-sans mt-0.5">
+            SKU serialization, spot valuations, S3 image assets, and automated low-stock triggers
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={handleExportCSV} variant="secondary" size="md" icon={Download}>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            onClick={handleExportCSV}
+            variant="secondary"
+            size="sm"
+            icon={Download}
+            disabled={products.length === 0}
+            title="Export products to CSV"
+          >
             Export CSV
           </Button>
-          {hasRole(['ADMIN']) && (
-            <Button onClick={() => handleOpenModal()} variant="orange" size="md" icon={Plus}>
-              New Catalog SKU
+
+          {hasRole(['ADMIN', 'WAREHOUSE']) && (
+            <Button
+              onClick={() => handleOpenModal()}
+              variant="orange"
+              size="sm"
+              icon={Plus}
+            >
+              Add Product SKU
             </Button>
           )}
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="bg-white p-4 rounded-xl border border-[#e4e4df] shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Search SKU code, product name, warehouse aisle..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-10 pr-3.5 py-2 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ea580c] font-medium"
-            />
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Input
+            placeholder="Search by SKU code or item title..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            icon={Search}
+            className="w-full text-xs"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {CATEGORIES_LIST.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setCategory(cat === 'All' ? '' : cat);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors btn-press ${
+                  (category === '' && cat === 'All') || category === cat
+                    ? 'bg-[#121316] text-white shadow-sm'
+                    : 'bg-white text-slate-600 hover:bg-[#f0f0eb] border border-[#dcdcd5]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
-          <select
-            value={category}
-            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
-            className="w-full px-3 py-2 text-xs rounded-lg border border-[#dcdcd5] bg-white text-[#121316] font-medium focus-visible:ring-2 focus-visible:ring-[#ea580c]"
-          >
-            <option value="">All Categories</option>
-            {CATEGORIES_LIST.filter(c => c !== 'All').map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-
           <button
-            onClick={() => { setLowStockOnly(!lowStockOnly); setPage(1); }}
-            className={`w-full px-3.5 py-2 text-xs font-bold font-mono rounded-lg border flex items-center justify-center gap-2 transition-all btn-press ${
+            onClick={() => {
+              setLowStockOnly(!lowStockOnly);
+              setPage(1);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all btn-press ${
               lowStockOnly
-                ? 'bg-rose-50 border-rose-300 text-rose-800'
-                : 'bg-white border-[#dcdcd5] text-slate-700 hover:border-[#121316]'
+                ? 'bg-rose-600 text-white border border-rose-600 shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-rose-50 hover:text-rose-700 border border-[#dcdcd5]'
             }`}
           >
-            <AlertTriangle className={`w-3.5 h-3.5 ${lowStockOnly ? 'text-rose-600' : 'text-slate-400'}`} />
-            <span>Low Stock Alert Filter</span>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Low Stock Alerts</span>
           </button>
         </div>
       </div>
@@ -213,11 +294,32 @@ export const ProductsPage = () => {
           <Table headers={['SKU & Item Name', 'Category', 'Unit Spot Valuation', 'Physical Stock', 'Alert Min', 'Warehouse Bin', 'Actions']}>
             {products.map((p) => {
               const isLow = p.currentStock <= p.minimumStock;
+              const img = resolveImageUrl(p.imageUrl);
               return (
                 <tr key={p.id} className="hover:bg-[#fafaf8] transition-colors">
                   <td className="py-3 px-4 first:pl-6">
-                    <span className="font-mono font-bold text-[#ea580c] text-xs block">{p.sku}</span>
-                    <span className="font-bold text-[#121316] text-xs block">{p.name}</span>
+                    <div className="flex items-center gap-3">
+                      {/* Product Thumbnail with S3 / Upload support */}
+                      <div className="w-10 h-10 rounded-lg bg-[#f0f0eb] border border-[#dcdcd5] flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Package className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+
+                      <div>
+                        <span className="font-mono font-bold text-[#ea580c] text-xs block">{p.sku}</span>
+                        <span className="font-bold text-[#121316] text-xs block">{p.name}</span>
+                      </div>
+                    </div>
                   </td>
                   <td className="py-3 px-4">
                     <Badge variant="purple">{p.category}</Badge>
@@ -275,6 +377,62 @@ export const ProductsPage = () => {
         title={editingProduct ? `Edit Catalog SKU: ${editingProduct.sku}` : 'Register Master SKU Item'}
       >
         <form onSubmit={handleSaveProduct} className="space-y-4">
+          {/* Image Upload Drag & Drop Preview Section (AWS S3 Bonus) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-mono font-bold text-slate-700 block uppercase">
+              Product Visual Asset (AWS S3 / Storage)
+            </label>
+
+            <div className="flex items-center gap-4 p-3 rounded-xl border border-dashed border-[#dcdcd5] bg-[#fafaf8]">
+              <div className="w-16 h-16 rounded-lg bg-white border border-[#e4e4df] flex items-center justify-center overflow-hidden shrink-0 shadow-2xs relative">
+                {formData.imageUrl ? (
+                  <>
+                    <img
+                      src={resolveImageUrl(formData.imageUrl)}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                      className="absolute top-0.5 right-0.5 p-0.5 bg-rose-600 text-white rounded-full hover:bg-rose-700 shadow-xs"
+                      title="Remove image"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-slate-400" />
+                )}
+              </div>
+
+              <div className="flex-1">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageFileChange}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                />
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  icon={UploadCloud}
+                  isLoading={isUploadingImage}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs"
+                >
+                  {formData.imageUrl ? 'Change Image' : 'Upload S3 Image'}
+                </Button>
+                <p className="text-[10px] text-slate-500 font-mono mt-1">
+                  Supports PNG, JPG, WEBP up to 5MB
+                </p>
+              </div>
+            </div>
+          </div>
+
           <Input
             label="Product Title"
             name="name"

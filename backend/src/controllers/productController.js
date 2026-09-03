@@ -1,13 +1,16 @@
 import defaultProductService, { ProductService } from '../services/productService.js';
+import { storageService } from '../services/storageService.js';
 
 export class ProductController {
   /**
    * Dependency Inversion Principle (DIP):
-   * Injects productService via constructor.
+   * Injects productService and storageService via constructor.
    * @param {ProductService} productService
+   * @param {StorageService} storage
    */
-  constructor(productService = defaultProductService) {
+  constructor(productService = defaultProductService, storage = storageService) {
     this.productService = productService;
+    this.storage = storage;
   }
 
   getProducts = async (req, res, next) => {
@@ -75,6 +78,20 @@ export class ProductController {
       res.status(200).json({
         success: true,
         message: 'Product deleted successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  uploadImage = async (req, res, next) => {
+    try {
+      const imageUrl = await this.storage.uploadProductImage(req.file);
+
+      res.status(200).json({
+        success: true,
+        message: 'Product image uploaded successfully',
+        data: { imageUrl },
       });
     } catch (error) {
       next(error);
